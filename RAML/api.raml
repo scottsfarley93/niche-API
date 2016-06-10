@@ -1,0 +1,1249 @@
+#%RAML 1.0
+title: Niche API
+version: v1
+baseUri: http://api.niche.geography.wisc.edu
+/variables:
+  displayName: Niche Variables
+  get:
+    description: Get a list of variables in the database
+    queryParameters:
+      variableType:
+        displayName: Variable Type
+        type: string
+        example: TMax
+        required: false
+      variablePeriod:
+        displayName: Variable Period
+        type: integer
+        example: 1
+        required: false
+      variablePeriodType:
+        displayName: Variable Period Type
+        type: string
+        example: Month
+        required: false
+      averagingPeriod:
+        displayName: Variable Averaging Period
+        type: integer
+        example: 1
+        required: false
+      averagingPeriodType:
+        displayName: Variable Averaging Period Type
+        example: Decade
+        required: false
+        type: string
+      variableUnits:
+        displayName: Variable Units
+        example: cm
+        required: false
+        type: string
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "success": true,
+                "status":200,
+                "timestamp": "12/19/2016, 7:00:00 PM",
+                "data": [
+                  {
+                    "variableDescription": "Decadal Averaged January Mean Temperature",
+                    "variablePeriod" : 1,
+                    "variablePeriodType": "Month",
+                    "averagingPeriod":1,
+                    "averagingPeriodType":"Decade",
+                    "variableUnits" : "C",
+                    "variableID" : 1,
+                    "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                  }
+                ],
+                "message": ""
+              }
+  post:
+    description: Get a list of variables in the database
+    queryParameters:
+      variableType:
+        displayName: Variable Type
+        type: string
+        example: prcp
+        required: true
+      variableDescription:
+        displayName: Variable Description
+        example: Decadal average total annual precipitation
+        type: string
+        required: true
+      variableUnits:
+        displayName: Variable Units
+        example: cm
+        type: string
+        required: true
+      variablePeriod:
+        type: integer
+        displayName: Variable Period
+        example: 1
+        required: true
+      variablePeriodType:
+        type: string
+        displayName: Variable Period Type
+        example: Year
+        required: true
+      averagingPeriod:
+        type: integer
+        displayName: Variable Averaging Period
+        required: true
+        example: 1
+      averagingPeriodType:
+        type: string
+        displayName: Variable Averaging Period Type
+        required: true
+        example: Decade
+    responses:
+      201:
+        body:
+          application/json:
+            example: |
+              {
+                "message" : "Added variable 231 to database.",
+                "success" : true,
+                "status" : 201,
+                "timestamp" : "12/19/2016, 7:00:00 PM",
+                "data" : []
+              }
+  /{variableid}:
+    displayName: Niche Variables by ID
+    get:
+      description: Get details on a specific variable
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                "message" : "",
+                "status":200,
+                "success":true,
+                "data" : [
+                  {
+                    "variableDescription": "Decadal Averaged January Mean Temperature",
+                    "variablePeriod" : 1,
+                    "variablePeriodType": "Month",
+                    "averagingPeriod":1,
+                    "averagingPeriodType":"Decade",
+                    "variableUnits" : "C",
+                    "variableID" : 1,
+                    "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                  }
+                ]
+                }
+    put:
+      description: Update details of a specific variable with new information
+      queryParameters:
+        variableType:
+          displayName: Variable Type
+          type: string
+          example: TMax
+          required: false
+        variablePeriod:
+          displayName: Variable Period
+          type: integer
+          example: 1
+          required: false
+        variablePeriodType:
+          displayName: Variable Period Type
+          type: string
+          example: Month
+          required: false
+        averagingPeriod:
+          displayName: Variable Averaging Period
+          type: integer
+          example: 1
+          required: false
+        averagingPeriodType:
+          displayName: Variable Averaging Period Type
+          example: Decade
+          required: false
+          type: string
+        variableUnits:
+          displayName: Variable Units
+          example: cm
+          required: false
+          type: string
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Updated variable 231 to database.",
+                  "success" : true,
+                  "status" : 200,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : [
+                  {
+                    "variableDescription": "Decadal Averaged January Mean Temperature",
+                    "variablePeriod" : 1,
+                    "variablePeriodType": "Month",
+                    "averagingPeriod":1,
+                    "averagingPeriodType":"Decade",
+                    "variableUnits" : "C",
+                    "variableID" : 1,
+                    "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                  }
+                  ]
+                }
+
+    delete:
+      description: Delete a variable from the database
+      responses:
+        204:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Deleted variable 231.",
+                  "success" : true,
+                  "status" : 200,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : []
+                }
+
+  /variableTypes:
+    displayName: Niche Variable Types
+    get:
+      description: List all variable types in the database
+      queryParameters:
+        abbreviation:
+          example: TMax
+          required: false
+          type: string
+          displayName: Variable Abbreviation
+        variableName:
+          example: Maximum Temperature
+          required: false
+          type: string
+          displayName: Variable Name
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "",
+                  "success" : true,
+                  "status" : 200,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : [
+                    {
+                      "variableTypeID":89,
+                      "variableTypeAbbreviation" : "TMax",
+                      "variableTypeName" : "Maximum Temperature"
+                    }
+                  ]
+                }
+    post:
+      description: Add a new variable type to the database
+      queryParameters:
+        abbreviation:
+          example: TMax
+          required: true
+          type: string
+          displayName: Variable Abbreviation
+        variableName:
+          example: Maximum Temperature
+          required: true
+          type: string
+          displayName: Variable Name
+      responses:
+        201:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Added variable type 89 to the database.",
+                  "success" : true,
+                  "status" : 201,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : []
+                }
+    /{variableTypeID}:
+      displayName: Niche Variable Types by ID
+      get:
+        description: Get details about a specific variable type in the database
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  {
+                    "message" : "",
+                    "success" : true,
+                    "status" : 200,
+                    "timestamp" : "12/19/2016, 7:00:00 PM",
+                    "data" : [
+                      {
+                        "variableTypeID":89,
+                        "variableTypeAbbreviation" : "TMax",
+                        "variableTypeName" : "Maximum Temperature"
+                      }
+                    ]
+                  }
+      put:
+        description: Update a variable type defintion with new information
+        queryParameters:
+          abbreviation:
+            example: TMax
+            required: false
+            type: string
+            displayName: Variable Abbreviation
+          variableName:
+            example: Maximum Temperature
+            required: false
+            type: string
+            displayName: Variable Name
+        responses:
+          201:
+            body:
+              application/json:
+                example: |
+                  {
+                    "message" : "Updated variable type 89",
+                    "success" : true,
+                    "status" : 201,
+                    "timestamp" : "12/19/2016, 7:00:00 PM",
+                    "data" : [
+                      {
+                        "variableTypeID":89,
+                        "variableTypeAbbreviation" : "TMax",
+                        "variableTypeName" : "Maximum Temperature"
+                      }
+                    ]
+                  }
+      delete:
+       description:  Delete a variable type from the database
+       responses:
+         204:
+           body:
+             application/json:
+               example: |
+                 {
+                   "message" : "Deleted variable type 89",
+                   "success" : true,
+                   "status" : 204,
+                   "timestamp" : "12/19/2016, 7:00:00 PM",
+                   "data" : []
+                 }
+    /variableUnits:
+      displayName: Niche Variable Units
+      get:
+        description: Get a list of variable units in the database
+        queryParameters:
+          abbreviation:
+            displayName: Unit Abbreviation
+            example: cm
+            required: false
+            type: string
+          name:
+            displayName: Unit Name
+            example: centimeters
+            required: false
+            type: string
+        responses:
+          200:
+            body:
+              application/json:
+                example: |
+                  {
+                    "message" : "",
+                    "success" : true,
+                    "status" : 200,
+                    "timestamp" : "12/19/2016, 7:00:00 PM",
+                    "data" : [
+                      {
+                        "unitID" : 193,
+                        "unitAbbreviation" : "cm",
+                        "unitName":"centimeters"
+                      }
+                    ]
+                  }
+      post:
+        description: Add a new variable unit to the database
+        queryParameters:
+          abbreviation:
+            displayName: Unit Abbreviation
+            example: cm
+            required: true
+            type: string
+          name:
+            displayName: Unit Name
+            example: centimeters
+            required: true
+            type: string
+        responses:
+          201:
+            body:
+              application/json:
+                example: |
+                  {
+                    "message" : "Add variable 190 to the database",
+                    "success" : true,
+                    "status" : 201,
+                    "timestamp" : "12/19/2016, 7:00:00 PM",
+                    "data" : [
+                      {
+                        "unitID" : 190,
+                        "unitAbbreviation" : "cm",
+                        "unitName":"centimeters"
+                      }
+                    ]
+                  }
+      /{unitID}:
+        displayName: Niche Variable Units by UnitID
+        get:
+          description: Get details about a specific variable unit
+          responses:
+            200:
+              body:
+                application/json:
+                  example: |
+                    {
+                      "message" : "",
+                      "success" : true,
+                      "status" : 200,
+                      "timestamp" : "12/19/2016, 7:00:00 PM",
+                      "data" : [
+                        {
+                          "unitID" : 190,
+                          "unitAbbreviation" : "cm",
+                          "unitName":"centimeters"
+                        }
+                      ]
+                    }
+        put:
+          description: Updated a variable unit with new information
+          queryParameters:
+            abbreviation:
+              displayName: Unit Abbreviation
+              example: cm
+              required: false
+              type: string
+            name:
+              displayName: Unit Name
+              example: centimeters
+              required: false
+              type: string
+          responses:
+            201:
+              body:
+                application/json:
+                  example: |
+                    {
+                      "message" : "Updated variable 190",
+                      "success" : true,
+                      "status" : 201,
+                      "timestamp" : "12/19/2016, 7:00:00 PM",
+                      "data" : [
+                        {
+                          "unitID" : 190,
+                          "unitAbbreviation" : "cm",
+                          "unitName":"centimeters"
+                        }
+                      ]
+                    }
+        delete:
+         description: Delete a variable unit from the database
+         responses:
+           204:
+             body:
+               application/json:
+                 example: |
+                   {
+                     "message" : "Deleted variable 190",
+                     "success" : true,
+                     "status" : 201,
+                     "timestamp" : "12/19/2016, 7:00:00 PM",
+                     "data" : []
+                   }
+  /variablePeriodTypes:
+   displayName: Niche Variable Periods
+   get:
+     description: Get a list of variable period types in the database
+     queryParameters:
+       name:
+         displayName: Variable Period Name
+         example: Year
+         required: false
+         type: string
+     responses:
+       200:
+         body:
+           application/json:
+             example: |
+               {
+                 "message" : "",
+                 "success" : true,
+                 "status" : 200,
+                 "timestamp" : "12/19/2016, 7:00:00 PM",
+                 "data" : [
+                   {
+                     "variablePeriodID" : 193,
+                     "variablePeriodName": "Year"
+                   }
+                 ]
+               }
+   post:
+     description: Add a new variable period to the database
+     queryParameters:
+       name:
+         displayName: Variable Period Name
+         example: Year
+         required: true
+         type: string
+     responses:
+       201:
+         body:
+           application/json:
+             example: |
+               {
+                 "message" : "Add variable period 7 to the database",
+                 "success" : true,
+                 "status" : 201,
+                 "timestamp" : "12/19/2016, 7:00:00 PM",
+                 "data" : [
+                   {
+                     "variablePeriodID" : 190,
+                     "variablePeriodName": "Year"
+                   }
+                 ]
+               }
+   /{variablePeriodID}:
+     displayName: Niche Variable Periods by ID
+     get:
+       description: Get details about a specific variable period
+       responses:
+         200:
+           body:
+             application/json:
+               example: |
+                 {
+                   "message" : "",
+                   "success" : true,
+                   "status" : 200,
+                   "timestamp" : "12/19/2016, 7:00:00 PM",
+                   "data" : [
+                     {
+                       "variablePeriodID" : 190,
+                       "variablePeriodName" : "Year"
+                     }
+                   ]
+                 }
+     put:
+       description: Updated a variable period with new information
+       queryParameters:
+         name:
+           displayName: Variable Period Name
+           example: Year
+           required: true
+           type: string
+       responses:
+         201:
+           body:
+             application/json:
+               example: |
+                 {
+                   "message" : "Updated variable period 190",
+                   "success" : true,
+                   "status" : 201,
+                   "timestamp" : "12/19/2016, 7:00:00 PM",
+                   "data" : [
+                     {
+                     "variablePeriodID" : 190,
+                     "variablePeriodName" : "Year"
+                     }
+                   ]
+                 }
+     delete:
+      description: Delete a variable period from the database
+      responses:
+        204:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Deleted variable period 190",
+                  "success" : true,
+                  "status" : 204,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : []
+                }
+  /averagingTypes:
+   displayName: Niche Variable Averaging Types
+   get:
+     description: Get a list of variable averaging types in the database
+     queryParameters:
+       name:
+         displayName: Variable Averaging Type Name
+         example: Year
+         required: false
+         type: string
+       minDays:
+         displayName: Minimum Days
+         example: 6
+         required: false
+         type: integer
+       maxDays:
+         displayName: Maximum Days
+         example: 8
+         required: false
+         type: integer
+     responses:
+       200:
+         body:
+           application/json:
+             example: |
+               {
+                 "message" : "",
+                 "success" : true,
+                 "status" : 200,
+                 "timestamp" : "12/19/2016, 7:00:00 PM",
+                 "data" : [
+                   {
+                     "averagingPeriodID" : 193,
+                     "averagingPeriodName": "Year",
+                     "averagingPeriodDays":365
+                   }
+                 ]
+               }
+   post:
+     description: Add a new averaging period to the database
+     queryParameters:
+       name:
+         displayName: Averaging Period Name
+         example: Year
+         required: true
+         type: string
+       days:
+         displayName: Averaging Period Days
+         example: 365
+         required: true
+         type: integer
+     responses:
+       201:
+         body:
+           application/json:
+             example: |
+               {
+                 "message" : "Add averaging period 193 to the database",
+                 "success" : true,
+                 "status" : 201,
+                 "timestamp" : "12/19/2016, 7:00:00 PM",
+                 "data" : [
+                   {
+                   "averagingPeriodID" : 193,
+                   "averagingPeriodName": "Year",
+                   "averagingPeriodDays":365
+                   }
+                 ]
+               }
+   /{averagingPeriodID}:
+     displayName: Niche Variable Averaging Types by ID
+     get:
+       description: Get details about a specific averaging period
+       responses:
+         200:
+           body:
+             application/json:
+               example: |
+                 {
+                   "message" : "",
+                   "success" : true,
+                   "status" : 200,
+                   "timestamp" : "12/19/2016, 7:00:00 PM",
+                   "data" : [
+                     {
+                     "averagingPeriodID" : 193,
+                     "averagingPeriodName": "Year",
+                     "averagingPeriodDays":365
+                     }
+                   ]
+                 }
+     put:
+       description: Update a variable period with new information
+       queryParameters:
+         name:
+           displayName: Averaging Period Name
+           example: Year
+           required: false
+           type: string
+         days:
+           displayName: Averaging Period Days
+           example: 7
+           required: false
+           type: integer
+       responses:
+         201:
+           body:
+             application/json:
+               example: |
+                 {
+                   "message" : "Updated averaging period 193",
+                   "success" : true,
+                   "status" : 201,
+                   "timestamp" : "12/19/2016, 7:00:00 PM",
+                   "data" : [
+                     {
+                     "averagingPeriodID" : 193,
+                     "averagingPeriodName": "Year",
+                     "averagingPeriodDays":365
+                     }
+                   ]
+                 }
+     delete:
+      description: Delete an averaging period from the database
+      responses:
+        204:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Deleted averaging period 190",
+                  "success" : true,
+                  "status" : 204,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : []
+                }
+/sources:
+  displayName: Data Sources
+  get:
+    description: Get a list of the models and data sources in the database
+    queryParameters:
+      producer:
+        type: string
+        example: NCAR
+        required: false
+        displayName: Data Producer
+      model:
+        type: string
+        example: CCSM
+        required: false
+        displayName: Model
+      modelVersion:
+        type: number
+        example: 3.0
+        required: false
+        displayName: Model Version
+      modelScenario:
+        type: string
+        example: RCP8
+        required: false
+        displayName: Model Scenario
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "message" : "",
+                "success" : true,
+                "status":200,
+                "timestamp" : "12/19/2016, 7:00:00 PM",
+                "data": [
+                  {
+                    "sourceID" : 237,
+                    "producer" : "NCAR",
+                    "model" : "CCSM",
+                    "scenario":"",
+                    "productVersion":3,
+                    "productURL" : "http://www.cesm.ucar.edu/models/ccsm3.0/",
+                    "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                  }
+                ]
+              }
+  post:
+    description: Add a new source or model data source to the database
+    queryParameters:
+      producer:
+        type: string
+        example: NCAR
+        required: true
+        displayName: Data Producer
+      model:
+        type: string
+        example: CCSM
+        required: true
+        displayName: Model
+      modelVersion:
+        type: number
+        example: 3.0
+        required: true
+        displayName: Model Version
+      modelScenario:
+        type: string
+        example: RCP8
+        required: true
+        displayName: Model Scenario
+      modelURL:
+        type: string
+        example: http://www.cesm.ucar.edu/models/ccsm3.0/,
+        required: true
+        displayName: Model URL
+    responses:
+      201:
+        body:
+          application/json:
+            example: |
+              {
+                "message" : "Added source 238 to the database.",
+                "success" : true,
+                "status": 201,
+                "timestamp" : "12/19/2016, 7:00:00 PM",
+                "data": []
+              }
+  /{sourceid}:
+    displayName: Data Sources by ID
+    get:
+      description: List details about a specific source
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "",
+                  "success" : true,
+                  "status":200,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data": [
+                    {
+                      "sourceID" : 237,
+                      "producer" : "NCAR",
+                      "model" : "CCSM",
+                      "scenario":"",
+                      "productVersion":3,
+                      "productURL" : "http://www.cesm.ucar.edu/models/ccsm3.0/",
+                      "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                    }
+                  ]
+                }
+    put:
+      description: Update specific source with new information
+      queryParameters:
+        producer:
+          type: string
+          example: NCAR
+          required: false
+          displayName: Data Producer
+        model:
+          type: string
+          example: CCSM
+          required: false
+          displayName: Model
+        modelVersion:
+          type: number
+          example: 3.0
+          required: false
+          displayName: Model Version
+        modelScenario:
+          type: string
+          example: RCP8
+          required: false
+          displayName: Model Scenario
+        modelURL:
+          type: string
+          example: http://www.cesm.ucar.edu/models/ccsm3.0/,
+          required: false
+          displayName: Model URL
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Updated variable 231.",
+                  "success" : true,
+                  "status" : 200,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : [
+                  {
+                    "variableDescription": "Decadal Averaged January Mean Temperature",
+                    "variablePeriod" : 1,
+                    "variablePeriodType": "Month",
+                    "averagingPeriod":1,
+                    "averagingPeriodType":"Decade",
+                    "variableUnits" : "C",
+                    "variableID" : 1,
+                    "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                  }
+                  ]
+                }
+    delete:
+      description: Delete a source from the database
+      responses:
+        204:
+          body:
+            application/json:
+              example: |
+                {
+                  "message" : "Deleted source 231",
+                  "success" : true,
+                  "status" : 204,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : []
+                }
+
+/layers:
+  description: Raster layers stored in the database
+  displayName: Layers
+  get:
+    description: Get a list of the layers that are stored in the database
+    queryParameters:
+      yearsBP:
+        displayName: Years B.P.
+        description: Years before 1950
+        required: false
+        example: 22000
+        type: integer
+      variableType:
+        displayName: Variable Type
+        description: Variable type filter
+        example: "Tmax"
+        required: false
+        type: string
+      variablePeriod:
+        displayName: VariablePeriod
+        description: Variable period filter
+        example: 1
+        required: false
+        type: integer
+      variablePeriodType:
+        displayName: Variable Period Name
+        description: Variable period type specification for variablePeriod filter
+        type: string
+        example: Month
+        required: false
+      variableID:
+        displayName: Variable ID
+        description: Variable ID
+        type: integer
+        example: 13
+        required: false
+      sourceID:
+        displayName: Data Source ID
+        description: Data source ID number
+        type: integer
+        example: 13
+        required: false
+      sourceProducer:
+        displayName: Data producer
+        description: Entity that produced the data
+        type: string
+        example: NCAR
+        required: false
+      modelName:
+        displayName: Model Name
+        description: Name of the model that produced the data
+        example: CCSM
+        type: string
+        required: false
+      modelVersion:
+        displayName: Model Version Number
+        description: Version of the model that prduced the data
+        example: 3
+        type: number
+        required: false
+      resolution:
+        displayName: Grid Resolution
+        description: Native spatial resolution of the data in degrees
+        example: 1
+        type: number
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+              "success": true,
+              "status": 200,
+              "message": "",
+              "timestamp" : "1/1/2000 5:17pm",
+              "data": [
+                {
+                  "layerID" : 15,
+                  "yearsBP":22000,
+                  "variableID" : 22,
+                  "variableType" : "Tmax"
+                  "variableDescription" : "Decadal Average January Maximum Temperature"
+                  "variablePeriod" : 1,
+                  "VariablePeriodType" : "Month",
+                  "AveragingPeriod" : 1,
+                  "AveragingPeriodType" : "Decade",
+                  "AveragingPeriodDays" : 3650,
+                  "SourceID" : 2,
+                  "DataProducer" : "NCAR",
+                  "Model" :"CCSM",
+                  "ModelVersion" : 3,
+                  "TableName" : "ce7sf23wzs5d93"
+                }
+              ]
+              }
+  /{layerID}:
+    displayName: Layers by ID
+    description: Layer by ID
+    get:
+      description: Get a list of layers by layerID
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                "success": true,
+                "status": 200,
+                "message": "",
+                "timestamp" : "1/1/2000 5:17pm",
+                "data": [
+                  {
+                    "layerID" : 15,
+                    "yearsBP":22000,
+                    "variableID" : 22,
+                    "variableType" : "Tmax"
+                    "variableDescription" : "Decadal Average January Maximum Temperature"
+                    "variablePeriod" : 1,
+                    "VariablePeriodType" : "Month",
+                    "AveragingPeriod" : 1,
+                    "AveragingPeriodType" : "Decade",
+                    "AveragingPeriodDays" : 3650,
+                    "SourceID" : 2,
+                    "DataProducer" : "NCAR",
+                    "Model" :"CCSM",
+                    "ModelVersion" : 3,
+                    "TableName" : "ce7sf23wzs5d93"
+                  }
+                ]
+                }
+        404:
+          body:
+            application/json:
+              example: |
+                {
+                "success" : false,
+                "timestamp" : "1/1/2000 5:17pm",
+                "message" : "Layer does not exist.",
+                "status" : 404,
+                "data" : []
+                }
+    put:
+      description: Update layer defintion with new information
+      queryParameters:
+        yearsBP:
+          displayName: Years B.P.
+          description: Years before 1950
+          required: false
+          example: 22000
+          type: integer
+        variableType:
+          displayName: Variable Type
+          description: Variable type filter
+          example: "Tmax"
+          required: false
+          type: string
+        variablePeriod:
+          displayName: VariablePeriod
+          description: Variable period filter
+          example: 1
+          required: false
+          type: integer
+        variablePeriodType:
+          displayName: Variable Period Name
+          description: Variable period type specification for variablePeriod filter
+          type: string
+          example: Month
+          required: false
+        variableID:
+          displayName: Variable ID
+          description: Variable ID
+          type: integer
+          example: 13
+          required: false
+        sourceID:
+          displayName: Data Source ID
+          description: Data source ID number
+          type: integer
+          example: 13
+          required: false
+        sourceProducer:
+          displayName: Data producer
+          description: Entity that produced the data
+          type: string
+          example: NCAR
+          required: false
+        modelName:
+          displayName: Model Name
+          description: Name of the model that produced the data
+          example: CCSM
+          type: string
+          required: false
+        modelVersion:
+          displayName: Model Version Number
+          description: Version of the model that prduced the data
+          example: 3
+          type: number
+          required: false
+        resolution:
+          displayName: Grid Resolution
+          description: Native spatial resolution of the data in degrees
+          example: 1
+          type: number
+          required: false
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                {
+                "success" : true,
+                "message" : "Updated layer 231",
+                "timestamp" : "1/1/2000 5:17pm",
+                "data" : [
+                {
+                  "layerID" : 231,
+                  "yearsBP":22000,
+                  "variableID" : 22,
+                  "variableType" : "Tmax"
+                  "variableDescription" : "Decadal Average January Maximum Temperature"
+                  "variablePeriod" : 1,
+                  "VariablePeriodType" : "Month",
+                  "AveragingPeriod" : 1,
+                  "AveragingPeriodType" : "Decade",
+                  "AveragingPeriodDays" : 3650,
+                  "SourceID" : 2,
+                  "DataProducer" : "NCAR",
+                  "Model" :"CCSM",
+                  "ModelVersion" : 3,
+                  "TableName" : "ce7sf23wzs5d93"
+                }
+                ]
+                }
+        404:
+          body:
+            application/json:
+              example: |
+                {
+                "success" : false,
+                "timestamp" : "1/1/2000 5:17pm",
+                "message" : "Layer does not exist.",
+                "status" : 404,
+                "data" : []
+                }
+    delete:
+      description: Delete layer from the database
+      responses:
+        204:
+          body:
+            application/json:
+              example: |
+                {
+                  "success" : true,
+                  "timestamp" : "1/1/2000 5:17pm",
+                  "message" : "Layer 231 deleted.",
+                  "status" : 204,
+                  "data" : []
+                }
+/data:
+  description: Get spatial data from the niche database
+  get:
+    description: Get spatial data for a latitude/longitude pair
+    queryParameters:
+      latitude:
+        required: true
+        description: North-South position on the earth's surface
+        example: 37.235
+        type: number
+        displayName: Latitude
+      longitude:
+        required: true
+        description: East-West position on the earth's surface
+        example: -122.254
+        type: number
+        displayName: Longitude
+      yearsBP:
+        displayName: Years B.P.
+        description: Years before 1950
+        required: false
+        example: 22000
+        type: integer
+      variableType:
+        displayName: Variable Type
+        description: Variable type filter
+        example: "Tmax"
+        required: false
+        type: string
+      variablePeriod:
+        displayName: VariablePeriod
+        description: Variable period filter
+        example: 1
+        required: false
+        type: integer
+      variablePeriodType:
+        displayName: Variable Period Name
+        description: Variable period type specification for variablePeriod filter
+        type: string
+        example: Month
+        required: false
+      variableID:
+        displayName: Variable ID
+        description: Variable ID
+        type: integer
+        example: 13
+        required: false
+      sourceID:
+        displayName: Data Source ID
+        description: Data source ID number
+        type: integer
+        example: 13
+        required: false
+      sourceProducer:
+        displayName: Data producer
+        description: Entity that produced the data
+        type: string
+        example: NCAR
+        required: false
+      modelName:
+        displayName: Model Name
+        description: Name of the model that produced the data
+        example: CCSM
+        type: string
+        required: false
+      modelVersion:
+        displayName: Model Version Number
+        description: Version of the model that prduced the data
+        example: 3
+        type: number
+        required: false
+      resolution:
+        displayName: Grid Resolution
+        description: Native spatial resolution of the data in degrees
+        example: 1
+        type: number
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "success" : true,
+                "timestamp" : "1/1/2000 5:17pm",
+                "status" : 200,
+                "message" : "",
+                "data" : [
+                  "layerID" : 231,
+                  "variableID" :43,
+                  "sourceID" :2,
+                  "latitude" : 37.12,
+                  "longitude" : -124.235,
+                  "value" : 34.1,
+                  "yearsBP" : 22000
+                ]
+              }
