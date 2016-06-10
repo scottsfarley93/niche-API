@@ -1651,6 +1651,14 @@ def addSource():
     :returns:
         HTTP Response
         HTTP Statuses: 201 (request successful, resource created), 400 (required parameters not set), 200 (resource exists, not modified)
+        Example:
+            {
+              "message" : "",
+              "success" : true,
+              "status":201,
+              "timestamp" : "12/19/2016, 7:00:00 PM",
+              "data": []
+            }
     """
     producer = request.query.producer
     model = request.query.model
@@ -1674,10 +1682,26 @@ def addSource():
     if productURL == '':
         productURL = None
     if modelVersion is None or productURL is None or modelScenario is None or producer is None or model is None:
-        r = JSONResponse(data = [], status=400, message="Not all parameters were set.  Required parameters: producer, model, modelVersion, modelSCenario, modelURL")
+        ##Required parameters are not set, so return 400
+        r = JSONResponse(data = [], status=400, message="Not all parameters were set.  Required parameters: producer, model, modelVersion, modelScenario, modelURL")
         return bottle.HTTPResponse(status=400, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    ## Check to see if the resource already exists
+    query = '''SELECT COUNT(*) FROM sources WHERE
+        1 = 1
+        AND (lower(model) LIKE %(model)s )
+        AND (lower(scenario) LIKE %(modelScenario)s)
+        AND (lower(productVersion) = %(productVersion)s )
+    '''
+    cursor.execute(query, {'model' : model, 'modelScenario' : modelScenario, 'productVersion':modelVersion})
+    count = cursor.fetchone()[0]
+    if count > 0:
+        ## resource exists
+        ## return 200
+        r = JSONResponse(data=[], success=False, message = "Resource already exists.  Not modified.", status=200, timestamp='auto')
+        return bottle.HTTPResponse(status=200, body=r.toJSON())
+    ## otherwise create the new resource
     query = """
         INSERT INTO sources VALUES(
         DEFAULT, %(producer)s, %(model)s, %(modelVersion)s, %(modelScenario)s, %(modelURL)s, DEFAULT) returning sourceID;
@@ -1692,6 +1716,31 @@ def addSource():
 ## GET a source by its id
 @get("/sources/<sourceid>")
 def getSourceByID(sourceID):
+    """GET details about a source using its sourceID
+        Parameters:
+            @:param: sourceID (integer) [required]
+        :returns:
+            HTTP Response
+            HTTP Statuses: 200 (request successful, resource exists), 404 (request failed, resource does not exist)
+            Example:
+                {
+                  "message" : "",
+                  "success" : true,
+                  "status":200,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data": [
+                    {
+                      "sourceID" : 237,
+                      "producer" : "NCAR",
+                      "model" : "CCSM",
+                      "scenario":"",
+                      "productVersion":3,
+                      "productURL" : "http://www.cesm.ucar.edu/models/ccsm3.0/",
+                      "lastUpdate" : "12/19/2016, 7:00:00 PM"
+                    }
+                  ]
+                }
+    """
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1714,9 +1763,11 @@ def getSourceByID(sourceID):
         d['lastUpdate'] = d['lastUpdate'].strftime("%Y-%m-%d %H:%M:%S")
         out.append(d)
     if len(out) == 0:
+        ## resource does not exist, return 404
         r = JSONResponse(data=out, success=False, message = "Source does not exist.  You can POST a new one to the /sources resource.", status=404, timestamp='auto')
         code = 404
     else:
+        ## resource exists, return 200
         r = JSONResponse(data=out, success=True, message = "", status=200, timestamp='auto')
         code = 200
     return bottle.HTTPResponse(status=code, body=r.toJSON())
@@ -1724,6 +1775,38 @@ def getSourceByID(sourceID):
 ## PUT an update to an existing source
 @put("/sources/<sourceID>")
 def updateSourceByID(sourceID):
+    """
+        PUT an update to a source in the database using its source ID and returns the modified copy.
+        Parameters:
+            @:param: sourceID (string) [required]
+            @:param: producer (string) [optional]
+            @:param: model (string) [optional]
+            @:param: modelVersion (string) [optional]
+            @:param: modelScenario (string) [optional]
+            @:param: modelURL (string) [optional]
+        :returns:
+            HTTP Response
+            HTTP Statuses: 201 (request successful, resource modified), 404 (request failed, resource does not exist)
+            Example:
+            {
+              "message" : "Updated variable 231.",
+              "success" : true,
+              "status" : 200,
+              "timestamp" : "12/19/2016, 7:00:00 PM",
+              "data" : [
+              {
+                "variableDescription": "Decadal Averaged January Mean Temperature",
+                "variablePeriod" : 1,
+                "variablePeriodType": "Month",
+                "averagingPeriod":1,
+                "averagingPeriodType":"Decade",
+                "variableUnits" : "C",
+                "variableID" : 1,
+                "lastUpdate" : "12/19/2016, 7:00:00 PM"
+              }
+              ]
+            }
+    """
     producer = request.query.producer
     model = request.query.model
     modelVersion = request.query.modelVersion
@@ -1747,6 +1830,15 @@ def updateSourceByID(sourceID):
         productURL = None
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    ## see if the resource exists
+    query  = '''SELECT count(*) from sources where sourceID = %(sourceID);'''
+    cursor.execute(query, {'sourceID' : sourceID})
+    count = cursor.fetchone()[0]
+    if count == 0:
+        ## resource does not exist, return 404
+        r = JSONResponse(data=[], success=False, message = template("Source {{sourceID}} does not exist.", sourceID=sourceID), status=404, timestamp='auto')
+        return bottle.HTTPResponse(status=404, body=r.toJSON())
+    ## otherwise, it does exit, so modify
     query = """
         UPDATE sources
         SET
@@ -1760,9 +1852,11 @@ def updateSourceByID(sourceID):
         """
     cursor.execute(query, {'model': model, 'producer' : producer,'modelVersion':modelVersion,
                            'modelScenario' : modelScenario, 'modelURL': productURL, 'sourceID':sourceID})
+    ## select the newly modified copy
     query = "SELECT * FROM sources WHERE sourceID = %(sourceID)s"
     header = ['sourceID', 'producer', 'model', 'productVersion', 'productURL', 'lastUpdate']
     cursor.execute(query, {'sourceID':sourceID})
+    ## format response
     row = cursor.fetchone()
     out = []
     d = {}
@@ -1779,6 +1873,21 @@ def updateSourceByID(sourceID):
 ## DELETE a source from the database by its id
 @delete("/sources/<sourceID>")
 def deleteSourceByID(sourceID):
+    """DELETE a source in the database using its sourceID
+        Parameters:
+            @:param: sourceID (integer) [required]
+        Returns:
+            HTTP Response
+            HTTP Status Codes: 204 (request successful, resource deleted or did not exist)
+            Example:
+                {
+                  "message" : "Deleted source 231",
+                  "success" : true,
+                  "status" : 204,
+                  "timestamp" : "12/19/2016, 7:00:00 PM",
+                  "data" : []
+                }
+    """
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1787,6 +1896,7 @@ def deleteSourceByID(sourceID):
         AND
         sourceID = %(sourceID)s;
         """
+    cursor.execute(query, {'sourceID' : sourceID})
     r = JSONResponse(data=[], success=True, message = template("Deleted source {{sourceID}} from the database", sourceID=sourceID), status=204, timestamp='auto')
     code = 204
     return bottle.HTTPResponse(status=code, body=r.toJSON())
@@ -1794,8 +1904,54 @@ def deleteSourceByID(sourceID):
 ## Search for layers
 @get("/layers")
 def getlayers():
+    """Get a list of layers meeting query parameters.
+        layers are the actual datasets held within the database are refer to a specific raster table
+        Parameters:
+            @:param: variableType (string) [optional]
+            @:param: variablePeriod (number) [optional]
+            @:param: variablePeriodType (string) [optional]
+            @:param: averagingPeriod (string) [optional]
+            @:param: averagingPeriodType (string) [optional]
+            @:param: variableID (integer) [optional]
+            @:param: sourceID (integer) [optional]
+            @:param: sourceProducer (string) [optional]
+            @:param: modelName (string) [optional]
+            @:param: modelVersion (number) [optional]
+            @:param: resolution (number) [optional]
+            @:param: scenario (string) [optional]
+        :returns:
+            HTTP Response
+            HTTP Statuses: 200 (request successful)
+            Example:
+                {
+                "success": true,
+                "status": 200,
+                "message": "",
+                "timestamp" : "1/1/2000 5:17pm",
+                "data": [
+                  {
+                    "layerID" : 15,
+                    "yearsBP":22000,
+                    "variableID" : 22,
+                    "variableType" : "Tmax"
+                    "variableDescription" : "Decadal Average January Maximum Temperature"
+                    "variablePeriod" : 1,
+                    "VariablePeriodType" : "Month",
+                    "AveragingPeriod" : 1,
+                    "AveragingPeriodType" : "Decade",
+                    "AveragingPeriodDays" : 3650,
+                    "SourceID" : 2,
+                    "DataProducer" : "NCAR",
+                    "Model" :"CCSM",
+                    "ModelVersion" : 3,
+                    "TableName" : "ce7sf23wzs5d93"
+                  }
+                ]
+                }
+    """
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    ## parse the input
     yearsBP = request.query.yearsBP
     variableType = request.query.variableType
     variablePeriod = request.query.variablePeriod
@@ -1856,7 +2012,8 @@ def getlayers():
     header = ['yearsBP', 'variableID', 'variableType', 'ariableDescription', 'variablePeriod',
             'ariablePeriodType', 'variableAveraging', 'variableUnits', 'averagingPeriodType',
             'sourceID', 'producer', 'model', 'productVersion', 'scenario', 'tableName', 'lastUpdate']
-    cursor.execute(query, params)
+    cursor.execute(query, params) ## do the search
+    ## format the output
     out = []
     rows = cursor.fetchall()
     for row in rows:
@@ -1869,19 +2026,54 @@ def getlayers():
             i += 1
         d['lastUpdate'] = d['lastUpdate'].strftime("%Y-%m-%d %H:%M:%S")
         out.append(d)
-    r = JSONResponse(data=out, message="", status=200)
+    r = JSONResponse(data=out, success=True, message="", status=200)
     return bottle.HTTPResponse(status=200, body=r.toJSON())
 
 ## POST A new layer
 ## ---> will required a posting of the actual data too
 @post("/layers")
 def addLayer():
-    r = JSONResponse(data=[], message="POSTing to add new layer is not yet implemented.", status=501)
+    """NOT YET IMPLEMENTED"""
+    #TODO:Implement this
+    r = JSONResponse(data=[], message="POSTing to add new layer has not been implemented.", status=501)
     return bottle.HTTPResponse(status=501, body=r.toJSON())
 
 ## GET Layer details by ID
 @get("/layers/<layerID>")
 def getLayerByID(layerID):
+    """GET details about a layer using its layerID
+        Paramters:
+            @:param: layerID (integer) [required]
+        :returns:
+            HTTP Response
+            HTTP Statuses: 200 (request successful, resource exists), 404 (request failed, resource exists)
+            Example:
+                {
+                "success": true,
+                "status": 200,
+                "message": "",
+                "timestamp" : "1/1/2000 5:17pm",
+                "data": [
+                  {
+                    "layerID" : 15,
+                    "yearsBP":22000,
+                    "variableID" : 22,
+                    "variableType" : "Tmax"
+                    "variableDescription" : "Decadal Average January Maximum Temperature"
+                    "variablePeriod" : 1,
+                    "VariablePeriodType" : "Month",
+                    "AveragingPeriod" : 1,
+                    "AveragingPeriodType" : "Decade",
+                    "AveragingPeriodDays" : 3650,
+                    "SourceID" : 2,
+                    "DataProducer" : "NCAR",
+                    "Model" :"CCSM",
+                    "ModelVersion" : 3,
+                    "TableName" : "ce7sf23wzs5d93"
+                  }
+                ]
+                }
+    """
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     query = '''
@@ -1899,14 +2091,14 @@ def getLayerByID(layerID):
         WHERE 1=1
         AND recordID=%(layerID)s;
         '''
-
     params = {
         'layerID':layerID
     }
     header = ['yearsBP', 'variableID', 'variableType', 'ariableDescription', 'variablePeriod',
             'ariablePeriodType', 'variableAveraging', 'variableUnits', 'averagingPeriodType',
             'sourceID', 'producer', 'model', 'productVersion', 'scenario', 'tableName', 'lastUpdate']
-    cursor.execute(query, params)
+    cursor.execute(query, params) ## do the search
+    ## format the response
     out = []
     rows = cursor.fetchall()
     for row in rows:
@@ -1920,9 +2112,11 @@ def getLayerByID(layerID):
         d['lastUpdate'] = d['lastUpdate'].strftime("%Y-%m-%d %H:%M:%S")
         out.append(d)
     if len(out) == 0:
+        ## resource does not exist, return 404
         r = JSONResponse(data = [], message="Layer does not exist.  You can POST a new one with the /layers resource.", status=404)
         code = 404
     else:
+        ## resource exists, return 200
         r = JSONResponse(data = out, message="", status=200)
         code = 200
     return bottle.HTTPResponse(status=code, body=r.toJSON())
@@ -1931,6 +2125,21 @@ def getLayerByID(layerID):
 ## DELETE a Layer and the associated raster table
 @delete("/layers/<layerID>")
 def deleteLayerByID(layerID):
+    """Delete a layer in the layers table using its layerID
+        Parameters:
+            @:param: layerID (integer) [required]
+        :returns:
+            HTTP Response
+            HTTP Statuses: 204 (request successful, resource deleted or did not exist)
+            Example:
+                {
+                  "success" : true,
+                  "timestamp" : "1/1/2000 5:17pm",
+                  "message" : "Layer 231 deleted.",
+                  "status" : 204,
+                  "data" : []
+                }
+    """
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     ## first get the table name from the row
@@ -1956,7 +2165,39 @@ def deleteLayerByID(layerID):
 ## update a layer
 @put("/layers/<layerID>")
 def updateLayer(layerID):
-    r = JSONResponse(data=[], message="Resource not yet implemented.", status=501)
+    """Update layer details using its layerID and return the updated copy.
+    Parameters
+        @:param: layerID (integer) [required]
+    :returns:
+        HTTP Response
+        HTTP Statuses: 201 (request successful, resource modified), 404 (request failed, resource does not exist), 200 (resource exits, not modified)
+        Example:
+            {
+            "success" : true,
+            "message" : "Updated layer 231",
+            "timestamp" : "1/1/2000 5:17pm",
+            "data" : [
+            {
+              "layerID" : 231,
+              "yearsBP":22000,
+              "variableID" : 22,
+              "variableType" : "Tmax"
+              "variableDescription" : "Decadal Average January Maximum Temperature"
+              "variablePeriod" : 1,
+              "VariablePeriodType" : "Month",
+              "AveragingPeriod" : 1,
+              "AveragingPeriodType" : "Decade",
+              "AveragingPeriodDays" : 3650,
+              "SourceID" : 2,
+              "DataProducer" : "NCAR",
+              "Model" :"CCSM",
+              "ModelVersion" : 3,
+              "TableName" : "ce7sf23wzs5d93"
+            }
+            ]
+            }
+    """
+    r = JSONResponse(data=[], success=False, message="Resource not yet implemented.", status=501)
     return bottle.HTTPResponse(status=501, body=r.toJSON())
 
 
@@ -1964,11 +2205,56 @@ def updateLayer(layerID):
 ## GET Data
 @get("/data")
 def getData():
+    """Get data from the raster datasets stored in the database.
+    Filtering available on variables and sources.
+    Spatial input:
+        Latitude/Longitude: [supported]
+        Bounding Box: [not yet implemented]
+    Parameters:
+        @:param: latitude (number) [required]
+        @:param: longitude (number) [required]
+        @:param: bbox [not yet implemented]
+        @:param: yearsBP (number) [optional]
+        @:param: variableType (string) [optional]
+        @:param: variablePeriod (integer) [optional]
+        @:param: variablePeriodType (string) [optional]
+        @:param: averagingPeriod (integer) [optional]
+        @:param: averagingPeriodType (string) [optional]
+        @:param: variableID (integer) [optional]
+        @:param: sourceID (integer) [optional]
+        @:param: modelName (string) [optional]
+        @:param: modelVersion (number) [optional]
+        @:param: scenario (string) [optional]
+        @:param: resolution (number) [optional]
+    :returns:
+        HTTP Response
+        HTTP Statuses: 200 (request successful)
+        Example:
+            {
+              "success" : true,
+              "timestamp" : "1/1/2000 5:17pm",
+              "status" : 200,
+              "message" : "",
+              "data" : [
+                "layerID" : 231,
+                "variableID" :43,
+                "sourceID" :2,
+                "latitude" : 37.12,
+                "longitude" : -124.235,
+                "value" : 34.1,
+                "yearsBP" : 22000
+              ]
+            }
+    """
+    #TODO: Add interpolation between time period
+    #TODO: Add bounding box
     latitude = request.query.latitude
     longitude = request.query.longitude
     if latitude == '' or longitude == '':
+        ## required parameters are not set
         r = JSONResponse(data= [], message = "Required parameters not set.  Required parameters: latitude, longitude", status=400)
         return bottle.HTTPResponse(status=400, body=r.toJSON())
+    ## all other parameters are optional
     yearsBP = request.query.yearsBP
     variableType = request.query.variableType
     variablePeriod = request.query.variablePeriod
@@ -2041,6 +2327,7 @@ def getData():
         query = '''SELECT ST_Value(rast, ST_SetSRID(ST_MakePoint(%(longitude)s, %(latitude)s), 4326)) FROM %(tableName)
             WHERE ST_Insersects(rast, ST_SetSRID(ST_MakePoint(%(longitude)s, %(latitude)s), 4326));'''
         cursor.execute(query, {'tableName' : tableName, 'latitude' : latitude, 'longitude' : longitude})
+        ##TODO: Interpolation goes here.
         row = cursor.fetchone()
         if len(row) == 0:
             val = None
