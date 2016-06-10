@@ -268,7 +268,7 @@ def getVariableByID(variableID):
             @:param: variableID (integer) [required]
         Returns:
             HTTP Response
-            HTTP Statuses: 200 (request successful, resource exists), 404 (request failed, resource does not exist)
+            HTTP Statuses: 200 (request successful, resource exists), 404 (request failed, resource does not exist), 400 (required parameters not set)
             Example:
                 {
                     "message" : "",
@@ -291,6 +291,14 @@ def getVariableByID(variableID):
     ## make database connection
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
+    try:
+        int(variableID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
+
     query = """
         select variableDescription, variablePeriod, variablePeriodTypes.variablePeriodType, variableUnits.variableUnit,
         variableAveraging, averagingPeriodTypes.averagingPeriodType, variableID, lastUpdate
@@ -336,7 +344,7 @@ def updateVariableByID(variableID):
             @:param: variableUnits (string) [optional]
         Returns:
             HTTP Response
-            HTTP Statuses: 201 (success, resource modified), 404 (request failed, resource does not exist)
+            HTTP Statuses: 201 (success, resource modified), 404 (request failed, resource does not exist), 400 (required parameters not set)
             Example:
                 {
                   "message" : "Updated variable 231 to database.",
@@ -357,6 +365,14 @@ def updateVariableByID(variableID):
                   ]
                 }
     '''
+    ## check to see if variableID is set as a number
+    try:
+        int(variableID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     ## parse the variables in the request query
     variableType = request.query.variableType
     variablePeriod = request.query.variablePeriod
@@ -461,7 +477,7 @@ def deleteVariableByID(variableID):
             @:param: variableID (integer) [required]
         Returns:
             HTTP Response
-            HTTP Statuses: 204 (success, resource deleted or does not exist)
+            HTTP Statuses: 204 (success, resource deleted or does not exist), 400 (required parameters not set)
             Example:
                 {
                   "message" : "Deleted variable 231.",
@@ -471,6 +487,15 @@ def deleteVariableByID(variableID):
                   "data" : []
                 }
     '''
+    ## check to see if variableID is set as a number
+    try:
+        int(variableID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
+
     ## Connect to the database
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
@@ -624,6 +649,14 @@ def getVariableTypeByID(variableTypeID):
                   ]
                 }
     '''
+    ## check to see if variableTypeID is set as a number
+    try:
+        int(variableTypeID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableTypeID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     ## open the connection
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
@@ -674,6 +707,14 @@ def deleteVariableTypeByID(variableTypeID):
                   "data" : []
                 }
     '''
+    ## check to see if variableTypeID is set as a number
+    try:
+        int(variableTypeID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableTypeID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -712,6 +753,14 @@ def updateVariableTypeByID(variableTypeID):
                   ]
                 }
     '''
+    ## check to see if variableTypeID is set as a number
+    try:
+        int(variableTypeID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableTypeID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     abbreviation = request.query.abbreviation
@@ -901,6 +950,14 @@ def getVariableUnitByID(variableUnitID):
                   ]
                 }
     '''
+    ## check to see if variableUnitID is set as a number
+    try:
+        int(variableUnitID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableUnitID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -947,6 +1004,14 @@ def deleteVariableUnitByID(variableUnitID):
                   "data" : []
                 }
     '''
+    ## check to see if variableUnitID is set as a number
+    try:
+        int(variableUnitID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableUnitID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -988,6 +1053,14 @@ def updateVariableUnitByID(variableUnitID):
               ]
             }
     """
+    ## check to see if variableUnitID is set as a number
+    try:
+        int(variableUnitID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variableUnitID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     abbreviation = request.query.abbreviation
@@ -1173,6 +1246,14 @@ def getVariablePeriodByID(variablePeriodID):
                   ]
                 }
     """
+    ## check to see if variablePeriodID is set as a number
+    try:
+        int(variablePeriodID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variablePeriodID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1221,6 +1302,14 @@ def deleteVariablePeriodByID(variablePeriodID):
                   "data" : []
                 }
     """
+    ## check to see if variablePeriodID is set as a number
+    try:
+        int(variablePeriodID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variablePeriodID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1259,6 +1348,14 @@ def updateVariablePeriodByID(variablePeriodID):
                   ]
                 }
     """
+    ## check to see if variablePeriodID is set as a number
+    try:
+        int(variablePeriodID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: variablePeriodID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     fullName = request.query.name
@@ -1439,6 +1536,14 @@ def getAveragingTypeByID(averagingPeriodTypeID):
                   ]
                 }
     """
+    ## check to see if averagingPeriodTypeID is set as a number
+    try:
+        int(averagingPeriodTypeID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: averagingPeriodTypeID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1488,6 +1593,14 @@ def deleteAveragingTypeByID(averagingTypeID):
               "data" : []
             }
     """
+    ## check to see if averagingTypeID is set as a number
+    try:
+        int(averagingTypeID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: averagingTypeID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1511,6 +1624,15 @@ def updateAveragingTypeByID(averagingTypeID):
         HTTP Response
         HTTP Statuses: 201 (request succesful, resource modified), 404 (request failed, resource does not exist)
     """
+    ## check to see if averagingTypeID is set as a number
+    try:
+        int(averagingTypeID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: averagingTypeID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
+
     numDays = request.query.days
     fullName = request.query.name
     if fullName == '':
@@ -1741,6 +1863,14 @@ def getSourceByID(sourceID):
                   ]
                 }
     """
+    ## check to see if sourceID is set as a number
+    try:
+        int(sourceID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: sourceID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -1807,6 +1937,14 @@ def updateSourceByID(sourceID):
               ]
             }
     """
+    ## check to see if sourceID is set as a number
+    try:
+        int(sourceID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: sourceID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     producer = request.query.producer
     model = request.query.model
     modelVersion = request.query.modelVersion
@@ -1888,6 +2026,14 @@ def deleteSourceByID(sourceID):
                   "data" : []
                 }
     """
+    ## check to see if sourceID is set as a number
+    try:
+        int(sourceID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: sourceID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
@@ -2074,6 +2220,14 @@ def getLayerByID(layerID):
                 ]
                 }
     """
+    ## check to see if layerID is set as a number
+    try:
+        int(layerID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: layerID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     query = '''
@@ -2140,6 +2294,14 @@ def deleteLayerByID(layerID):
                   "data" : []
                 }
     """
+    ## check to see if layerID is set as a number
+    try:
+        int(layerID)
+    except (TypeError,ValueError):
+        ## required parameters not set, return 400
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: layerID", status=400, timestamp='auto')
+        code = 400
+        return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     ## first get the table name from the row
@@ -2197,6 +2359,7 @@ def updateLayer(layerID):
             ]
             }
     """
+    ##TODO: Implement this
     r = JSONResponse(data=[], success=False, message="Resource not yet implemented.", status=501)
     return bottle.HTTPResponse(status=501, body=r.toJSON())
 
