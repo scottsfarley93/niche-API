@@ -32,6 +32,7 @@ def connectToDefaultDatabase():
     for line in f:
         fieldname = header[i]
         line = line.replace("\n", "")
+        line = line.replace("'", "")
         d[fieldname] = line
         i += 1
     hostname = d['hostname']
@@ -164,6 +165,7 @@ def addVariable():
             @:param: averagingPeriod (intger) [required]
             @:param: averagingPeriodType (string) [required]
             @:param: variableUnits (string) [required]
+            @:param: description )string) [required]
         Returns:
             HTTP Response
             HTTP Statuses: 201 (success), 400 (parameters not set), 204 (Resource already exists --  No content)
@@ -321,6 +323,7 @@ def getVariableByID(variableID):
             fieldname = header[i]
             d[fieldname] = row[i]
             i += 1
+        d['lastUpdate'] = d['lastUpdate'].strftime("%Y-%m-%d %H:%M:%S")
         out.append(d)
     if len(out) == 0:
         r = JSONResponse(data=out, success=False, message = "Variable does not exist.  You can POST a new one to the /variables resource.", status=404, timestamp='auto')
@@ -386,10 +389,24 @@ def updateVariableByID(variableID):
     variablePeriodType = variablePeriodType.lower()
     averagingPeriodType = averagingPeriodType.lower()
     variableUnits = variableUnits.lower()
+    if variableType == '':
+        variableType = None
+    if variablePeriod == '':
+        variablePeriod = None
+    if variablePeriodType == '':
+        variablePeriodType = None
+    if averagingPeriod == '':
+        averagingPeriod =None
+    if averagingPeriodType == '':
+        averagingPeriodType = None
+    if variableUnits == '':
+        variableUnits = None
+    if description == '':
+        description = None
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     ## check if the resource exists:
-    query = '''SELECT count(*) from variables WHERE variableID = %(variableID);'''
+    query = '''SELECT count(*) from variables WHERE variableID = %(variableID)s'''
     cursor.execute(query, {'variableID' : variableID})
     row = cursor.fetchone()
     count = row[0]
@@ -406,6 +423,8 @@ def updateVariableByID(variableID):
         varTypeID = cursor.fetchone()
         if varTypeID != None:
             varTypeID = varTypeID[0]
+    else:
+        varTypeID = None
     if variablePeriodType is not None:
         query = '''
             SELECT variablePeriodTypeID from variablePeriodTypes WHERE variablePeriodType=%(variablePeriodType)s LIMIT 1;
@@ -414,6 +433,8 @@ def updateVariableByID(variableID):
         varPeriodTypeID = cursor.fetchone()
         if varPeriodTypeID is not None:
             varPeriodTypeID = varPeriodTypeID[0]
+    else:
+        varPeriodTypeID = None
 
     if averagingPeriodType is not None:
         query = '''SELECT averagingPeriodTypeID from averagingPeriodTypes where lower(averagingPeriodType)=%(averagingPeriodType)s LIMIT 1;'''
@@ -421,6 +442,8 @@ def updateVariableByID(variableID):
         averagingTypeID = cursor.fetchone()
         if averagingTypeID is not None:
             averagingTypeID = averagingTypeID[0]
+    else:
+        averagingTypeID = None
 
     if variableUnits is not None:
         query = '''SELECT variableUnitID from variableUnits where lower(variableUnitAbbreviation)=%(variableUnit)s OR lower(variableUnit) = %(variableUnit)s LIMIT 1;'''
@@ -428,19 +451,24 @@ def updateVariableByID(variableID):
         unitID = cursor.fetchone()
         if unitID is not None:
             unitID = unitID[0]
+    else:
+        unitID = None
     query = '''UPDATE variables SET
-            variableType = coalesce(%(varTypeID)s, variableType),
-            variablePeriod = coalesce(%(variablePeriod)s, variablePeriod),
-            variablePeriodType = coalesce(%(varPeriodTypeID)s, variablePeriodType),
-            variableAveraging = coalesce(%(averagingPeriod)s, variableAveraging),
-            variableAveragingType = coalesce(%(averagingTypeID)s, variableAveragingType),
-            variableDescription = coalesce(%(description)s, variableDescription),
+            variableType = coalesce(coalesce(%(varTypeID)s, NULL), variableType),
+            variablePeriod = coalesce(coalesce(%(variablePeriod)s, NULL), variablePeriod),
+            variablePeriodType = coalesce(coalesce(%(varPeriodTypeID)s, NULL), variablePeriodType),
+            variableAveraging = coalesce(coalesce(%(averagingPeriod)s, NULL), variableAveraging),
+            variableAveragingType = coalesce(coalesce(%(averagingTypeID)s, NULL), variableAveragingType),
+            variableDescription = coalesce(coalesce(%(description)s, ''), variableDescription),
             lastUpdate = current_timestamp
         WHERE
             variableID = %(variableID)s;
         '''
-    cursor.execute(query, {'varTypeID' : varTypeID, 'variablePeriod' : variablePeriod, 'varPeriodTypeID' : varPeriodTypeID,
-                           'averagingPeriod' : averagingPeriod, 'averagingTypeID' : averagingTypeID, 'description' : description, 'variableID' :variableID})
+
+    params = {'varTypeID' : varTypeID, 'variablePeriod' : variablePeriod, 'varPeriodTypeID' : varPeriodTypeID,
+                           'averagingPeriod' : averagingPeriod, 'averagingTypeID' : averagingTypeID, 'description' : description, 'variableID' :variableID}
+    print params
+    cursor.execute(query, params)
     ## get the last modified copy
     query = """
         select variableDescription, variablePeriod, variablePeriodTypes.variablePeriodType, variableUnits.variableUnit,
@@ -500,19 +528,20 @@ def deleteVariableByID(variableID):
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
-        DELETE FROM variables where
+        DELETE FROM variables
         WHERE variables.variableID = %(variableID)s
         """
     ## return the response
     cursor.execute(query, {'variableID': variableID})
     r = JSONResponse(data=[], success=True, message = template("Deleted variable {{variableID}}", variableID=variableID), status=204, timestamp='auto')
+    conn.commit()
     code = 204
     return bottle.HTTPResponse(status=code, body=r.toJSON())
 
 
 
 ### GET search for variable Types
-@get("/variables/variableTypes")
+@get("/variableTypes")
 def getVariableTypes():
     '''GET a list of the variable types.
         N.B. Variable types are the type of measurement contained in the variable, e.g., maximum temperature, precipitation
@@ -573,7 +602,7 @@ def getVariableTypes():
     return bottle.HTTPResponse(status=200, body=r.toJSON())
 
 ## Add a new variable Type
-@post("/variables/variableTypes")
+@post("/variableTypes")
 def addVariableType():
     '''POST a new variable type to the database
         Parameters:
@@ -626,7 +655,7 @@ def addVariableType():
     return bottle.HTTPResponse(status=201, body=r.toJSON())
 
 ## GET search variabletype by variableTypeID
-@get("/variables/variableTypes/<variableTypeID>")
+@get("/variableTypes/<variableTypeID>")
 def getVariableTypeByID(variableTypeID):
     '''GET details about a variable type
         Parameters:
@@ -690,7 +719,7 @@ def getVariableTypeByID(variableTypeID):
     return bottle.HTTPResponse(status=code, body=r.toJSON())
 
 ## DELETE a variable type
-@delete("/variables/variableTypes/<variableTypeID>")
+@delete("/variableTypes/<variableTypeID>")
 def deleteVariableTypeByID(variableTypeID):
     '''DELETE a variable type from the database using its variableTypeID
         Parameters:
@@ -718,17 +747,18 @@ def deleteVariableTypeByID(variableTypeID):
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     query = """
-        DELETE
+        DELETE from
         variableTypes
         WHERE 1 = 1
         AND
         variableTypeID = %(variableTypeID)s;
         """
     cursor.execute(query, {'variableTypeID': variableTypeID})
+    conn.commit()
     r = JSONResponse(data=[], success=True, message = template("Deleted variable {{variableTypeID}}", variableTypeID=variableTypeID), status=204, timestamp='auto')
     return bottle.HTTPResponse(status=204, body=r.toJSON())
 
-@put("/variables/variableTypes/<variableTypeID>")
+@put("/variableTypes/<variableTypeID>")
 def updateVariableTypeByID(variableTypeID):
     '''PUT an update to a variableType using its variableTypeID
         Parameters:
@@ -807,7 +837,7 @@ def updateVariableTypeByID(variableTypeID):
     return bottle.HTTPResponse(status=201, body=r.toJSON())
 
 ## GET variable units
-@get("/variables/variableUnits")
+@get("/variableUnits")
 def getVariableUnits():
     '''GET a list of all variable units in the database
         N.B. A variable unit must be in this list before it can be used in a variable record
@@ -868,7 +898,7 @@ def getVariableUnits():
     return bottle.HTTPResponse(status=200, body=r.toJSON())
 
 ## Add a new variable unit
-@post("/variables/variableUnits")
+@post("/variableUnits")
 def addVariableUnit():
     '''POST a variable unit type to the database
         Parameters:
@@ -902,13 +932,13 @@ def addVariableUnit():
         fullName = None
     if fullName is None or abbreviation is None:
         ## required parameters were not set, so return status 400
-        r = JSONResponse(data = [], success=False, message = "Not all parameters were specified.  Required parameters: name, abbreviation", status=400)
+        r = JSONResponse(data = [], success=False, message = "Not all parameters were specified.  Required parameters: unitName, abbreviation", status=400)
         return bottle.HTTPResponse(status=400, body=r.toJSON())
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     ## check if the resource already exists
     query = '''SELECT COUNT(*) from variableUnits WHERE lower(variableUnitAbbreviation) LIKE %(abbreviation)s OR lower(variableUnit) LIKE %(variableUnit)s;'''
-    cursor.execute(query, {'variableType': fullName, 'abbreviation':abbreviation})
+    cursor.execute(query, {'variableUnit': fullName, 'abbreviation':abbreviation})
     count = cursor.fetchone()[0]
     if count == 1:
         ## resource already exists, don't modify it, return 200
@@ -927,7 +957,7 @@ def addVariableUnit():
 
 
 ### GET variable unit by id
-@get("/variables/variableUnits/<variableUnitID>")
+@get("/variableUnits/<variableUnitID>")
 def getVariableUnitByID(variableUnitID):
     '''GET details about a variable unit by its id
         Parameters:
@@ -987,7 +1017,7 @@ def getVariableUnitByID(variableUnitID):
     return bottle.HTTPResponse(status=200, body=r.toJSON())
 
 ## DELETE a variable unit
-@delete("/variables/variableUnits/<variableUnitID>")
+@delete("/variableUnits/<variableUnitID>")
 def deleteVariableUnitByID(variableUnitID):
     '''DELETE a variable unit from the database using its variableUnitID
         Parameters:
@@ -1027,7 +1057,7 @@ def deleteVariableUnitByID(variableUnitID):
 
 
 ## Update a variable units entry
-@put("/variables/variableTypes/<variableUnitID>")
+@put("/variableUnits/<variableUnitID>")
 def updateVariableUnitByID(variableUnitID):
     """
     PUT an update to a variable unit in the database using its variableUnitID, and return the modified copy
@@ -1096,7 +1126,7 @@ def updateVariableUnitByID(variableUnitID):
     query = """
         select variableUnitID, variableUnit, variableUnitAbbreviation
         from variableUnits
-        WHERE 1 = 1
+        WHERE
         variableUnitID = %(variableUnitID)s;
         """
     header = ['variableUnitID', 'variableUnit', 'variableUnitAbbreviation']
@@ -1116,7 +1146,7 @@ def updateVariableUnitByID(variableUnitID):
 
 
 ## GET Niche Variable Periods
-@get("/variables/variablePeriodTypes")
+@get("/variablePeriodTypes")
 def getVariablePeriodTypes():
     """
     GET a list of variable types in the database
@@ -1168,7 +1198,7 @@ def getVariablePeriodTypes():
     return bottle.HTTPResponse(status=200, body=r.toJSON())
 
 ## Add a new variable period
-@post("/variables/variablePeriodTypes")
+@post("/variablePeriodTypes")
 def addVariablePeriod():
     """Post a new variable to the database
         Parameters:
@@ -1194,7 +1224,7 @@ def addVariablePeriod():
     if fullName == '':
         fullName = None
     else:
-        fullName = fullName.lower
+        fullName = fullName.lower()
     if fullName is None:
         ## No required parameters, return 400
         r = JSONResponse(data = [], success=False, message = "Not all parameters were specified.  Required parameters: name", status=400)
@@ -1203,7 +1233,7 @@ def addVariablePeriod():
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     ## check if the resource exists
-    query = '''SELECT count(*) from variablePeriodTypes WHERE lower(variablePeriod)=%(variablePeriod)s'''
+    query = '''SELECT count(*) from variablePeriodTypes WHERE lower(variablePeriodType) LIKE %(variablePeriod)s;'''
     cursor.execute(query, {'variablePeriod':fullName})
     count = cursor.fetchone()[0]
     if count > 0:
@@ -1212,7 +1242,7 @@ def addVariablePeriod():
         return bottle.HTTPResponse(status=200, body=r.toJSON())
     ## otherwise, create it
     query = '''
-        INSERT INTO variablePeriodTypes VALUES (DEFAULT, %(variablePeriod)s) RETURNING variablePeriodID;
+        INSERT INTO variablePeriodTypes VALUES (DEFAULT, %(variablePeriod)s) RETURNING variablePeriodTypeID;
     '''
     cursor.execute(query, {'variablePeriod': fullName})
     conn.commit()
@@ -1223,7 +1253,7 @@ def addVariablePeriod():
 
 
 ## GET variable period by ID
-@get("/variables/variablePeriodTypes/<variablePeriodID>")
+@get("/variablePeriodTypes/<variablePeriodID>")
 def getVariablePeriodByID(variablePeriodID):
     """
         GET details about a variable period by its variablePeriodID
@@ -1284,7 +1314,7 @@ def getVariablePeriodByID(variablePeriodID):
     return bottle.HTTPResponse(status=code, body=r.toJSON())
 
 ## DELETE variable period by ID
-@delete("/variables/variablePeriodTypes/<variablePeriodID>")
+@delete("/variablePeriodTypes/<variablePeriodID>")
 def deleteVariablePeriodByID(variablePeriodID):
     """
     Deletes a variable period by its variablePeriodID
@@ -1325,7 +1355,7 @@ def deleteVariablePeriodByID(variablePeriodID):
     return bottle.HTTPResponse(status=204, body=r.toJSON())
 
 ## Update a variable period
-@put("/variables/variablePeriodTypes/<variablePeriodID>")
+@put("/variablePeriodTypes/<variablePeriodID>")
 def updateVariablePeriodByID(variablePeriodID):
     """
     PUT an update to the variable period using its variablePeriodID
@@ -1364,7 +1394,7 @@ def updateVariablePeriodByID(variablePeriodID):
     else:
         fullName = fullName.lower()
     ##check if it exists
-    query = '''SELECT count(*) from variablePeriod where variablePeriodID = %(variablePeriodID)s;'''
+    query = '''SELECT count(*) from variablePeriodTypes where variablePeriodTypeID = %(variablePeriodID)s;'''
     cursor.execute(query, {'variablePeriodID' : variablePeriodID})
     count = cursor.fetchone()[0]
     if count == 0:
@@ -1376,7 +1406,7 @@ def updateVariablePeriodByID(variablePeriodID):
         UPDATE
         variablePeriodTypes
         SET
-        variablePeriodType = coalesce(%(variablePeriod)s, variablePeriod)
+        variablePeriodType = coalesce(%(variablePeriod)s, variablePeriodType)
         WHERE 1 = 1
         AND
         variablePeriodTypeID = %(variablePeriodID)s;
@@ -1386,11 +1416,11 @@ def updateVariablePeriodByID(variablePeriodID):
     query = """
         select variablePeriodTypeID, variablePeriodType
         from variablePeriodTypes
-        WHERE 1 = 1
-        variablePeriodTypeID = %(variablePeriodID)s;
+        WHERE 1 = 1 AND
+        (variablePeriodTypeID = %(variablePeriodID)s);
         """
     header = ['variablePeriodTypeID', 'variablePeriodType']
-    cursor.execute(query, {'variablePeriodID', variablePeriodID})
+    cursor.execute(query, {'variablePeriodID': variablePeriodID})
     out = []
     for row in cursor.fetchall():
         d = {}
@@ -1405,7 +1435,7 @@ def updateVariablePeriodByID(variablePeriodID):
     return bottle.HTTPResponse(status=201, body=r.toJSON())
 
 ## GET Averaging Periods
-@get("/variables/averagingTypes")
+@get("/averagingTypes")
 def getVariableAveragingTypes():
     """
     GET a list of variable averaging types from the database
@@ -1431,10 +1461,13 @@ def getVariableAveragingTypes():
                 }
     """
     fullName = request.query.name
+    days = request.query.days
     if fullName == '':
         fullName = None
     else:
         fullName = fullName.lower()
+    if days == '':
+        days= None
     print fullName
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -1443,9 +1476,10 @@ def getVariableAveragingTypes():
         from averagingPeriodTypes
         WHERE 1 = 1
             AND  (%(fullName)s is NULL or %(fullName)s = lower(averagingPeriodTypes.averagingPeriodType) )
+            AND  (%(days)s is NULL or %(days)s = averagingPeriodTypes.averagingPeriodDays )
         """
     header = ['averagingPeriodID', 'averagingPeriodType', 'averagingPeriodDays']
-    cursor.execute(query, {'fullName': fullName})
+    cursor.execute(query, {'fullName': fullName, 'days' : days})
     out = []
     for row in cursor.fetchall():
         d = {}
@@ -1460,7 +1494,7 @@ def getVariableAveragingTypes():
 
 
 ## Add a new variable period
-@post("/variables/averagingTypes")
+@post("/averagingTypes")
 def addAveragingType():
     """
     POST a new averaging type to the database
@@ -1513,8 +1547,8 @@ def addAveragingType():
     return bottle.HTTPResponse(status=201, body=r.toJSON())
 
 ## GET averaging type by ID
-@get("/variables/averagingTypes/<averagingTypeID>")
-def getAveragingTypeByID(averagingPeriodTypeID):
+@get("/averagingTypes/<averagingTypeID>")
+def getAveragingTypeByID(averagingTypeID):
     """Get details about an averaging type by its averagingPeriodTypeID
         Parameters:
             @:param: averagingPeriodTypeID (integer) [required]
@@ -1536,12 +1570,12 @@ def getAveragingTypeByID(averagingPeriodTypeID):
                   ]
                 }
     """
-    ## check to see if averagingPeriodTypeID is set as a number
+    ## check to see if averagingTypeID is set as a number
     try:
-        int(averagingPeriodTypeID)
+        int(averagingTypeID)
     except (TypeError,ValueError):
         ## required parameters not set, return 400
-        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: averagingPeriodTypeID", status=400, timestamp='auto')
+        r = JSONResponse(data=[], success=False, message = "Required parameters not set.  Required parameters: averagingTypeID", status=400, timestamp='auto')
         code = 400
         return bottle.HTTPResponse(status=code, body=r.toJSON())
     conn = connectToDefaultDatabase()
@@ -1554,7 +1588,7 @@ def getAveragingTypeByID(averagingPeriodTypeID):
         averagingPeriodTypeID = %(averagingPeriodTypeID)s;
         """
     header = ['averagingPeriodID', 'averagingPeriodType', 'averagingPeriodDays']
-    cursor.execute(query, {'averagingPeriodTypeID': averagingPeriodTypeID})
+    cursor.execute(query, {'averagingPeriodTypeID': averagingTypeID})
     out = []
     for row in cursor.fetchall():
         d = {}
@@ -1575,7 +1609,7 @@ def getAveragingTypeByID(averagingPeriodTypeID):
     return bottle.HTTPResponse(status=code, body=r.toJSON())
 
 ## DELETE an averaging period type from the database
-@delete("/variables/averagingTypes/<averagingTypeID>")
+@delete("/averagingTypes/<averagingTypeID>")
 def deleteAveragingTypeByID(averagingTypeID):
     """
     DELETE an existing averagingTypeID from the database
@@ -1614,12 +1648,14 @@ def deleteAveragingTypeByID(averagingTypeID):
     return bottle.HTTPResponse(status=204, body=r.toJSON())
 
 ## UPDATE an existing averaging type
-@put("/variables/averagingTypes/<averagingTypeID>")
+@put("/averagingTypes/<averagingTypeID>")
 def updateAveragingTypeByID(averagingTypeID):
     """
     PUT an update on an averaging type into the database
     Parameters:
         @:param: averagingTypeID (integer) [required]
+        @:param: days (integer) [optional]
+        @:param: name (string) [otional]
     :returns:
         HTTP Response
         HTTP Statuses: 201 (request succesful, resource modified), 404 (request failed, resource does not exist)
@@ -1638,7 +1674,7 @@ def updateAveragingTypeByID(averagingTypeID):
     if fullName == '':
         fullName = None
     else:
-        fullName = fullName.lower
+        fullName = fullName.lower()
     if numDays == '':
         numDays = None
     conn = connectToDefaultDatabase()
@@ -1655,15 +1691,17 @@ def updateAveragingTypeByID(averagingTypeID):
     query = '''
         UPDATE averagingPeriodTypes
         SET
-            averagingPeriodType = coalesce(%(averagingPeriodType)s, averagingPeriodType)
+            averagingPeriodType = coalesce(%(averagingPeriodType)s, averagingPeriodType),
             averagingPeriodDays = coalesce(%(averagingPeriodDays)s, averagingPeriodDays)
         WHERE
-            averagingPeriodTypeID = %(averagingPeriodTypeID)s
+            averagingPeriodTypeID = %(averagingPeriodTypeID)s;
     '''
+    print averagingTypeID, fullName, numDays
     cursor.execute(query, {'averagingPeriodTypeID': averagingTypeID, 'averagingPeriodType': fullName, 'averagingPeriodDays':numDays})
     conn.commit()
     ## get the new copy and return it
     query = '''SELECT * FROM averagingPeriodTypes where averagingPeriodTypeID=%(averagingPeriodTypeID)s'''
+
     cursor.execute(query, {'averagingPeriodTypeID':averagingTypeID})
     header = ['averagingPeriodTypeID', 'averagingPeriodType', 'Days']
     out = []
@@ -1836,7 +1874,7 @@ def addSource():
     return bottle.HTTPResponse(status=201, body=r.toJSON())
 
 ## GET a source by its id
-@get("/sources/<sourceid>")
+@get("/sources/<sourceID>")
 def getSourceByID(sourceID):
     """GET details about a source using its sourceID
         Parameters:
@@ -1969,7 +2007,7 @@ def updateSourceByID(sourceID):
     conn = connectToDefaultDatabase()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     ## see if the resource exists
-    query  = '''SELECT count(*) from sources where sourceID = %(sourceID);'''
+    query  = '''SELECT count(*) from sources where sourceID = %(sourceID)s;'''
     cursor.execute(query, {'sourceID' : sourceID})
     count = cursor.fetchone()[0]
     if count == 0:
@@ -1989,9 +2027,9 @@ def updateSourceByID(sourceID):
             sourceid = %(sourceID)s;
         """
     cursor.execute(query, {'model': model, 'producer' : producer,'modelVersion':modelVersion,
-                           'modelScenario' : modelScenario, 'modelURL': productURL, 'sourceID':sourceID})
+                           'modelScenario' : modelScenario, 'productURL': productURL, 'sourceID':sourceID})
     ## select the newly modified copy
-    query = "SELECT * FROM sources WHERE sourceID = %(sourceID)s"
+    query = "SELECT sourceID, producer, model, productVersion, productURL, lastUpdate FROM sources WHERE sourceID = %(sourceID)s"
     header = ['sourceID', 'producer', 'model', 'productVersion', 'productURL', 'lastUpdate']
     cursor.execute(query, {'sourceID':sourceID})
     ## format response
@@ -2004,6 +2042,7 @@ def updateSourceByID(sourceID):
         val = row[i]
         d[col] = val
         i += 1
+    d['lastUpdate'] = d['lastUpdate'].strftime("%Y-%m-%d %H:%M:%S")
     out.append(d)
     r = JSONResponse(data=out, success=True, message = template("Updated source {{sourceID}} ", sourceID=sourceID), status=201, timestamp='auto')
     return bottle.HTTPResponse(status=201, body=r.toJSON())
@@ -2111,28 +2150,64 @@ def getlayers():
     modelVersion = request.query.modelVersion
     resolution = request.query.resolution
     modelScenario = request.query.scenario
+    if yearsBP == '':
+        yearsBP = None
+    if variableType == '':
+        variableType = None
+    else:
+        variableType = variableType.lower()
+    if variablePeriod == '':
+        variablePeriod = None
+    if variablePeriodType == '':
+        variablePeriodType = None
+    else:
+        variablePeriodType = variablePeriodType.lower()
+    if averagingPeriod == '':
+        averagingPeriod = None
+    if averagingPeriodType == '':
+        averagingPeriodType = averagingPeriodType.lower()
+    if variableID == '':
+        variableID = None
+    if sourceID == '':
+        sourceID = None
+    if sourceProducer == '':
+        sourceProducer = None
+    else:
+        sourceProducer = sourceProducer.lower()
+    if modelName == '':
+        modelName = None
+    else:
+        modelName = modelName.lower()
+    if modelVersion == '':
+        modelVersion = None
+    if modelScenario == '':
+        modelScenario = None
+    else:
+        modelScenario = modelScenario.lower()
+    if resolution == '':
+        resolution = None
+
     query = '''
         SELECT
-            yearsBP, layers.variableID, variableTypes.variableType, variables.variableDescription, variables.variablePeriod,
+            yearsBP, rasterindex.variableID, variableTypes.variableType, variables.variableDescription, variables.variablePeriod,
             variablePeriodTypes.variablePeriodType, variables.variableAveraging, variableUnits.variableUnit, averagingPeriodTypes.averagingPeriodType,
-            sources.sourceID, sources.producer, sources.model, sources.productVersion, sources.scenario, tableName, lastUpdate
+            sources.sourceID, sources.producer, sources.model, sources.productVersion, sources.scenario, "tableName", rasterindex.lastUpdate
         from rasterIndex
         INNER JOIN variables on rasterIndex.variableID=variables.variableID
-            sources on rasterIndex.sourceID = sources.sourceID
-            variableTypes on variables.variableType = variableTypes.variableTypeID
-            variableUnits on variables.variableUnits = variableUnits.variableUnitID
-            averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
-            variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
+        INNER JOIN sources on rasterIndex.sourceID = sources.sourceID
+        INNER JOIN variableTypes on variables.variableType = variableTypes.variableTypeID
+        INNER JOIN variableUnits on variables.variableUnits = variableUnits.variableUnitID
+        INNER JOIN averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
+        INNER JOIN variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
         WHERE 1 = 1
-            AND (%(yearsBP)s is NULL or %(yearsBP)s = layers.yearsBP)
-            AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation)
+            AND (%(yearsBP)s is NULL or %(yearsBP)s = rasterIndex.yearsBP)
+            AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation) )
             AND (%(variablePeriod)s is NULL or %(variablePeriod)s = variables.variablePeriod )
             AND (%(variablePeriodType)s is NULL or %(variablePeriodType)s LIKE lower(variablePeriodTypes.variablePeriodType) )
             AND (%(averagingPeriod)s is NULL or %(averagingPeriod)s = variableAveraging )
             AND (%(averagingPeriodType)s is NULL or %(averagingPeriodType)s LIKE lower(averagingPeriodTypes.averagingPeriodType) )
-            AND (%(variableUnits)s is NULL or %(variableUnits)s LIKE lower(variableUnits.variableUnitAbbreviation))
-            AND (%(variableID)s is NULL or %(variableID)s = variableID)
-            AND (%(sourceID)s is NULL or %(sourceID)s = sourceID)
+            AND (%(variableID)s is NULL or %(variableID)s = rasterIndex.variableID)
+            AND (%(sourceID)s is NULL or %(sourceID)s = rasterIndex.sourceID)
             AND (%(resolution)s is NULL or %(resolution)s = resolution)
             AND (%(modelName)s is NULL or %(modelName)s LIKE lower(sources.model) )
             AND (%(sourceProducer)s is NULL or %(sourceProducer)s LIKE lower(sources.producer) )
@@ -2165,7 +2240,7 @@ def getlayers():
     for row in rows:
         i = 0
         d = {}
-        while i <  len(row):
+        while i <  len(header):
             col = header[i]
             val = row[i]
             d[col] = val
