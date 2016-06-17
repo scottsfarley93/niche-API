@@ -18,6 +18,13 @@ app.use(bodyParser.json());
 var router = express.Router();
 
 
+keys = {
+  user : 'paleo',
+  password : 'Alt0Sax!!',
+  dbName : 'paleo',
+  hostname : '127.0.0.1'
+}
+
 const PORT=8000;
 
 app.get("/", function(req, res){
@@ -85,27 +92,22 @@ app.get("/variables", function(req, res){
     if (err){
       res.json(err);
     }
-    // query = " select variableDescription, variablePeriod, variablePeriodTypes.variablePeriodType, variableUnits.variableUnit, \
-    //     variableAveraging, averagingPeriodTypes.averagingPeriodType, variableID, lastUpdate\
-    //     from variables\
-    //     inner join variableTypes on variables.variableType = variableTypes.variableTypeID\
-    //     inner join variableUnits on variables.variableUnits = variableUnits.variableUnitID\
-    //     inner join variablePeriodTypes on variables.variablePeriod = variablePeriodTypes.variablePeriodTypeID\
-    //     inner join averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID\
-    //     WHERE 1 = 1\
-    //     AND\
-    //         (($1) is NULL or ($1) LIKE lower(variableTypes.variableTypeAbbreviation) )\
-    //         AND  (($2) is NULL or ($2) = variables.variablePeriod )\
-    //          AND (($3) is NULL or ($3) LIKE lower(variablePeriodTypes.variablePeriodType) )\
-    //         AND (($4)is NULL or ($4) = variableAveraging )\
-    //         AND (($5) is NULL or ($5) LIKE lower(averagingPeriodTypes.averagingPeriodType) )\
-    //         AND (($6) is NULL or ($6) LIKE lower(variableUnits.variableUnitAbbreviation))"
-    q = "SELECT * FROM variableTypes where (($1) is NULL or ($1) LIKE lower(variableTypes.variableTypeAbbreviation));"
-    console.log(query)
-    //values = [variableType, variablePeriod, variablePeriodType, averagingPeriod, averagingPeriodType, variableUnits]
-    values = [NaN]
-    console.log(values)
-    var query = client.query(q, values);
+    q = " select variableDescription, variablePeriod, variablePeriodTypes.variablePeriodType, variableUnits.variableUnit, \
+        variableAveraging, averagingPeriodTypes.averagingPeriodType, variableID, lastUpdate\
+        from variables\
+        inner join variableTypes on variables.variableType = variableTypes.variableTypeID\
+        inner join variableUnits on variables.variableUnits = variableUnits.variableUnitID\
+        inner join variablePeriodTypes on variables.variablePeriod = variablePeriodTypes.variablePeriodTypeID\
+        inner join averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID\
+        WHERE 1 = 1\
+        AND\
+            (" + variableType + " is NULL or " + variableType + " LIKE lower(variableTypes.variableTypeAbbreviation) )\
+            AND  (" + variablePeriod + " is NULL or " + variablePeriod + " = variables.variablePeriod )\
+             AND (" + variablePeriodType + " is NULL or " + variablePeriodType + " LIKE lower(variablePeriodTypes.variablePeriodType) )\
+            AND (" + averagingPeriod + "is NULL or " + averagingPeriod + " = variableAveraging )\
+            AND (" + averagingPeriodType + " is NULL or " + averagingPeriodType + " LIKE lower(averagingPeriodTypes.averagingPeriodType) )\
+            AND (" + variableUnits + " is NULL or " + variableUnits + " LIKE lower(variableUnits.variableUnitAbbreviation))"
+    var query = client.query(q);
     console.log(query)
     query.on('row', function(row, result){
       console.log("Got row")
