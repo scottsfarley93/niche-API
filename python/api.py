@@ -2570,34 +2570,34 @@ def getData():
     cursor = conn.cursor()
     print "Collected query parameters."
     ## fetch the table names that match our query
-        query = '''
-            SELECT
-                "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
-                variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
-                variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, yearsBP
-            from rasterIndex
-            INNER JOIN variables on rasterIndex.variableID=variables.variableID
-            INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
-            INNER JOIN    variableTypes on variables.variableType = variableTypes.variableTypeID
-            INNER JOIN    variableUnits on variables.variableUnits = variableUnits.variableUnitID
-            INNER JOIN    averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
-            INNER JOIN    variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
-            WHERE 1 = 1
-                AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation) )
-                AND (%(variablePeriod)s is NULL or %(variablePeriod)s = variables.variablePeriod )
-                AND (%(variablePeriodType)s is NULL or %(variablePeriodType)s LIKE lower(variablePeriodTypes.variablePeriodType) )
-                AND (%(averagingPeriod)s is NULL or %(averagingPeriod)s = variableAveraging )
-                AND (%(averagingPeriodType)s is NULL or %(averagingPeriodType)s LIKE lower(averagingPeriodTypes.averagingPeriodType) )
-                AND (%(variableUnits)s is NULL or %(variableUnits)s LIKE lower(variableUnits.variableUnitAbbreviation))
-                AND (%(variableID)s is NULL or %(variableID)s = variables.variableID)
-                AND (%(sourceID)s is NULL or %(sourceID)s = sources.sourceID)
-                AND (%(resolution)s is NULL or %(resolution)s = resolution)
-                AND (%(modelName)s is NULL or %(modelName)s LIKE lower(sources.model) )
-                AND (%(sourceProducer)s is NULL or %(sourceProducer)s LIKE lower(sources.producer) )
-                AND (%(modelVersion)s is NULL or %(modelVersion)s = sources.productVersion )
-                AND (%(modelScenario)s is NULL or %(modelScenario)s LIKE lower(scenario) )
-                AND (yearsBP = %(yearsBP)s);
-            '''
+    query = '''
+        SELECT
+            "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
+            variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
+            variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, yearsBP
+        from rasterIndex
+        INNER JOIN variables on rasterIndex.variableID=variables.variableID
+        INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
+        INNER JOIN    variableTypes on variables.variableType = variableTypes.variableTypeID
+        INNER JOIN    variableUnits on variables.variableUnits = variableUnits.variableUnitID
+        INNER JOIN    averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
+        INNER JOIN    variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
+        WHERE 1 = 1
+            AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation) )
+            AND (%(variablePeriod)s is NULL or %(variablePeriod)s = variables.variablePeriod )
+            AND (%(variablePeriodType)s is NULL or %(variablePeriodType)s LIKE lower(variablePeriodTypes.variablePeriodType) )
+            AND (%(averagingPeriod)s is NULL or %(averagingPeriod)s = variableAveraging )
+            AND (%(averagingPeriodType)s is NULL or %(averagingPeriodType)s LIKE lower(averagingPeriodTypes.averagingPeriodType) )
+            AND (%(variableUnits)s is NULL or %(variableUnits)s LIKE lower(variableUnits.variableUnitAbbreviation))
+            AND (%(variableID)s is NULL or %(variableID)s = variables.variableID)
+            AND (%(sourceID)s is NULL or %(sourceID)s = sources.sourceID)
+            AND (%(resolution)s is NULL or %(resolution)s = resolution)
+            AND (%(modelName)s is NULL or %(modelName)s LIKE lower(sources.model) )
+            AND (%(sourceProducer)s is NULL or %(sourceProducer)s LIKE lower(sources.producer) )
+            AND (%(modelVersion)s is NULL or %(modelVersion)s = sources.productVersion )
+            AND (%(modelScenario)s is NULL or %(modelScenario)s LIKE lower(scenario) )
+            AND (yearsBP = %(yearsBP)s);
+        '''
 
     params = {
         'variableType' : variableType,
