@@ -2817,7 +2817,8 @@ def postData():
         query = '''
             SELECT
                 "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
-                variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, yearsBP
+                variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
+                variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, yearsBP
             from rasterIndex
             INNER JOIN variables on rasterIndex.variableID=variables.variableID
             INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
@@ -2861,7 +2862,7 @@ def postData():
         cursor.execute(query, params)
         rows = cursor.fetchall()
         header = [ "tableName", "sourceID", "Model", "Producer", "ModelVersion", "variableID",
-        "VariableDescription", "VariableType", "variableUnits", "yearsBP"]
+        "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "yearsBP"]
         # ## fetch the actual point data from each of the returned tables
         t2 = datetime.datetime.now()
         print "Got table list in", t2 - t1

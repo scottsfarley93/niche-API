@@ -3,7 +3,16 @@
     "info": {
         "title": "Niche API",
         "description": "Simple REST API to access climate data at specific points in space and time.  Developed at UW Madison, Geography.",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "contact": {
+            "name": "Scott Farley",
+            "url": "http://scottsfarley.com",
+            "email": "sfarley2@wisc.edu"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
     },
     "host": "niche.geography.wisc.edu",
     "schemes": [
@@ -239,10 +248,16 @@
         "/variables/{variableID}": {
             "get": {
                 "summary": "Get details about a specific variable",
-                "description": "Get full details about a specific variable in the database by using its variableID.",
+                "tags": [
+                    "variables"
+                ],
                 "produces": [
                     "application/json"
                 ],
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Get full details about a specific variable in the database by using its variableID.",
                 "parameters": [
                     {
                         "name": "variableID",
@@ -279,6 +294,15 @@
                         "type": "integer",
                         "format": "int64"
                     }
+                ],
+                "tags": [
+                    "variables"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "204": {
@@ -344,6 +368,15 @@
                         "required": false
                     }
                 ],
+                "tags": [
+                    "variables"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "201": {
                         "description": "Object Modified",
@@ -395,6 +428,15 @@
         "/variableTypes": {
             "get": {
                 "summary": "Get a list of variable types in the database.",
+                "tags": [
+                    "variableTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "parameters": [
                     {
                         "name": "abbreviation",
@@ -464,6 +506,15 @@
                         "description": "Full name of the variable type"
                     }
                 ],
+                "tags": [
+                    "variableTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Object already exists",
@@ -497,6 +548,15 @@
                         "type": "integer",
                         "description": "Database ID of the variable type"
                     }
+                ],
+                "tags": [
+                    "variableTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -570,6 +630,15 @@
                         "description": "Full name of the variable type"
                     }
                 ],
+                "tags": [
+                    "variableTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Success",
@@ -627,6 +696,15 @@
                         "required": true
                     }
                 ],
+                "tags": [
+                    "variableTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "204": {
                         "description": "Object deleted or did not exist.",
@@ -662,6 +740,15 @@
                         "required": false,
                         "description": "The abbreviation of the unit in which a variable is measured (e.g., cm)."
                     }
+                ],
+                "tags": [
+                    "units"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -715,6 +802,15 @@
                         "description": "The abbreviation of the unit in which a variable is measured (e.g., cm)."
                     }
                 ],
+                "tags": [
+                    "units"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Object exists",
@@ -748,6 +844,15 @@
                         "description": "Database id for this variable unit",
                         "in": "path"
                     }
+                ],
+                "tags": [
+                    "units"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -821,6 +926,15 @@
                         "description": "The abbreviation of the unit in which a variable is measured (e.g., cm)."
                     }
                 ],
+                "tags": [
+                    "units"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "201": {
                         "description": "Object modified",
@@ -879,6 +993,15 @@
                         "in": "path"
                     }
                 ],
+                "tags": [
+                    "units"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "204": {
                         "description": "Object deleted or did not exist",
@@ -907,6 +1030,15 @@
                         "description": "The name of the variable period type (e.g., Month)",
                         "in": "query"
                     }
+                ],
+                "tags": [
+                    "variablePeriods"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -954,6 +1086,15 @@
                         "description": "Name of the variable period type (e.g., Month)"
                     }
                 ],
+                "tags": [
+                    "variablePeriods"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Object already exists",
@@ -987,6 +1128,15 @@
                         "description": "Database id for this variable period type",
                         "in": "path"
                     }
+                ],
+                "tags": [
+                    "variablePeriods"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -1053,6 +1203,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "variablePeriods"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "201": {
                         "description": "Object Modified",
@@ -1111,6 +1270,15 @@
                         "in": "path"
                     }
                 ],
+                "tags": [
+                    "variablePeriods"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "204": {
                         "description": "Object deleted or did not exist",
@@ -1139,6 +1307,15 @@
                         "description": "The name of the averaging period type",
                         "in": "query"
                     }
+                ],
+                "tags": [
+                    "averagingTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -1193,6 +1370,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "averagingTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Object already exists",
@@ -1226,6 +1412,15 @@
                         "required": true,
                         "in": "path"
                     }
+                ],
+                "tags": [
+                    "averagingTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -1299,6 +1494,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "averagingTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "201": {
                         "description": "Object Modified",
@@ -1357,6 +1561,15 @@
                         "in": "path"
                     }
                 ],
+                "tags": [
+                    "averagingTypes"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "204": {
                         "description": "Object deleted or did not exist",
@@ -1406,6 +1619,15 @@
                         "required": false,
                         "in": "query"
                     }
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -1481,6 +1703,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "sources"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Object already exists",
@@ -1514,6 +1745,15 @@
                         "description": "Database id for this source",
                         "in": "path"
                     }
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -1601,6 +1841,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "sources"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "201": {
                         "description": "Object Modified",
@@ -1658,6 +1907,15 @@
                         "description": "Database id for this source",
                         "in": "path"
                     }
+                ],
+                "tags": [
+                    "sources"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "204": {
@@ -1765,6 +2023,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "layers"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Success",
@@ -1807,7 +2074,16 @@
                     "501": {
                         "description": "Resource does not exist"
                     }
-                }
+                },
+                "tags": [
+                    "layers"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ]
             }
         },
         "/layers/{layerID}": {
@@ -1821,6 +2097,15 @@
                         "type": "integer",
                         "in": "path"
                     }
+                ],
+                "tags": [
+                    "layers"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "responses": {
                     "200": {
@@ -1885,7 +2170,16 @@
                     "501": {
                         "description": "Resource does not exist"
                     }
-                }
+                },
+                "tags": [
+                    "layers"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ]
             },
             "delete": {
                 "summary": "Delete a layer and its raster table using its layerID",
@@ -1911,7 +2205,16 @@
                             "$ref": "#/definitions/EmptyResponse"
                         }
                     }
-                }
+                },
+                "tags": [
+                    "layers"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ]
             }
         },
         "/data": {
@@ -2024,6 +2327,15 @@
                         "in": "query"
                     }
                 ],
+                "tags": [
+                    "data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "responses": {
                     "200": {
                         "description": "Success",
@@ -2051,7 +2363,7 @@
                                     "description": "The newly modified object",
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/definitions/Layer"
+                                        "$ref": "#/definitions/Result"
                                     }
                                 }
                             }
@@ -2299,11 +2611,13 @@
             "properties": {
                 "layerID": {
                     "type": "integer",
-                    "description": "Database id for this layer"
+                    "description": "Database id for this layer",
+                    "example": 1
                 },
                 "yearsBP": {
                     "type": "integer",
-                    "description": "Years before 1950 that this layer represents"
+                    "description": "Years before 1950 that this layer represents",
+                    "example": 2000
                 },
                 "sourceID": {
                     "type": "integer",
