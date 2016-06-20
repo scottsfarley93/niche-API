@@ -10,6 +10,7 @@ import numpy
 import math
 import json
 
+bottle.BaseRequest.MEMFILE_MAX = 9999999999999
 
 _allow_origin = '*'
 _allow_methods = 'PUT, GET, POST, DELETE, OPTIONS'
@@ -2901,4 +2902,4 @@ def postData():
 def returnOptions():
     return bottle.HTTPResponse(status=200)
 
-run(host='localhost', port=8080, debug=True)
+run(server='cherrpy', port=8080, debug=True)
