@@ -2902,4 +2902,4 @@ def postData():
 def returnOptions():
     return bottle.HTTPResponse(status=200)
 
-run(server='cherrpy', port=8080, debug=True)
+run(server='paste', host='0.0.0.0',  port=8080, debug=True)
