@@ -2566,6 +2566,11 @@ def getData():
     modelScenario = request.query.scenario
     if modelScenario == '':
         modelScenario = None
+    ## these are extra params to keep track of data objects as they pass through the api
+    siteID = request.query.siteID
+    sampleID = request.query.sampleID
+    siteName = request.query.siteName
+
     conn = connectToDefaultDatabase()
     cursor = conn.cursor()
     print "Collected query parameters."
@@ -2646,6 +2651,9 @@ def getData():
             d['value'] = val ## this is the actual point value
             d['latitude'] = float(latitude)
             d['longitude'] = float(longitude)
+            d['siteName'] = siteName
+            d['sampleID'] = sampleID
+            d['siteID'] = siteID
             out.append(d)
         except Exception as e: ## table doesn't exist, but record for table does exist --> oops
             conn.rollback()
@@ -2842,7 +2850,7 @@ def postData():
                 AND (%(sourceProducer)s is NULL or %(sourceProducer)s LIKE lower(sources.producer) )
                 AND (%(modelVersion)s is NULL or %(modelVersion)s = sources.productVersion )
                 AND (%(modelScenario)s is NULL or %(modelScenario)s LIKE lower(scenario) )
-                AND (yearsBP = %(yearsBP)s);
+                AND (yearsBP <= %(yearsBP)s);
             '''
 
         params = {
