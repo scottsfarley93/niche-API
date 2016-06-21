@@ -28,7 +28,7 @@ class JSONResponse(): ## base response class that returns the json fields I want
     def __init__(self, data = (), success=True, message = "", status=200, timestamp='auto'):
         if data != ():
             self.data = data
-        self.sucess = success
+        self.success = success
         self.message = message
         self.status = status
         if timestamp == 'auto':
