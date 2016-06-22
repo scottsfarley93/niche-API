@@ -24,6 +24,12 @@ def enable_cors():
     response.headers['Access-Control-Allow-Methods'] = _allow_methods
     response.headers['Access-Control-Allow-Headers'] = _allow_headers
 
+@hook('before_request')
+def log_this_request():
+    logRequest(request)
+    print "Request logged."
+
+
 class JSONResponse(): ## base response class that returns the json fields I want
     def __init__(self, data = (), success=True, message = "", status=200, timestamp='auto'):
         if data != ():
@@ -53,7 +59,6 @@ def connectToDefaultDatabase():
         d[fieldname] = line
         i += 1
     hostname = d['hostname']
-    print hostname
     db = d['dbname']
     pw = d['password']
     user =d['user']
@@ -2912,5 +2917,31 @@ def postData():
 @route("/data", method=['OPTIONS'])
 def returnOptions():
     return bottle.HTTPResponse(status=200)
+
+
+def logRequest(req):
+    con = connectToDefaultDatabase()
+    cursor = con.cursor()
+    reqEnv = req.environ
+    method = reqEnv['REQUEST_METHOD']
+    server_protocol = reqEnv['SERVER_PROTOCOL']
+    user_agent = reqEnv['HTTP_USER_AGENT']
+    remote_ip = reqEnv['REMOTE_ADDR']
+    path =  req.path
+    args = req.query_string
+    sql = '''INSERT INTO call_log VALUES(default, %(resource)s, %(method)s, %(server_protocol)s, %(user_agent)s, %(remote_ip)s, %(args)s, default);'''
+    params = {
+        'method' : method,
+        'server_protocol' : server_protocol,
+        'user_agent' : user_agent,
+        'remote_ip' : remote_ip,
+        'resource' : path,
+        'args' : args
+    }
+    cursor.execute(sql, params)
+    con.commit()
+    cursor.close()
+    con.close()
+
 
 run(server='paste', host='0.0.0.0',  port=8080, debug=True)
