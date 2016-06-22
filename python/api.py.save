@@ -3097,9 +3097,9 @@ def getData():
             ## this is hacky and bad, but it works...
             ## dangerous if we make it public
 
-            query = '''SELECT (foo).*
-               FROM (SELECT ST_Value(rast,ST_Intersection(rast,ST_SetSRID(ST_MakePolygon(ST_GeomFromText('LINESTRING(-124 34,-114 30,-114 20,-124 34)')), 4326))) as geomval FROM public.''' + tableName + '''
-               WHERE ST_Intersects(rast,ST_SetSRID(ST_MakePolygon(ST_GeomFromText('LINESTRING(-124 34,-114 30,-114 20,-124 34)')), 4326))) as foo;'''
+            foo = '''SELECT ST_Intersection(rast,ST_SetSRID(ST_MakePolygon(ST_GeomFromText('LINESTRING(-124 34,-114 30,-114 20,-124 34)')), 4326)) as geomval FROM public.''' + tableName + '''
+               WHERE ST_Intersects(rast,ST_SetSRID(ST_MakePolygon(ST_GeomFromText('LINESTRING(-124 34,-114 30,-114 20,-124 34)')), 4326));'''
+            query = '''SELECT ST_Value(rast,foo) FROM 
             params = { 'area' : area }
             cursor.execute(query, params)
             tableRow = cursor.fetchone()
