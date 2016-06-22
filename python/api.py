@@ -2584,7 +2584,7 @@ def getData():
         SELECT
             "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
             variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
-            variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, yearsBP
+            variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, sources.producturl
         from rasterIndex
         INNER JOIN variables on rasterIndex.variableID=variables.variableID
         INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
@@ -2628,7 +2628,7 @@ def getData():
     cursor.execute(query, params)
     rows = cursor.fetchall()
     header = [ "tableName", "sourceID", "Model", "Producer", "ModelVersion", "variableID",
-    "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "yearsBP"]
+    "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "dataCitation"]
 
     out = []
     ## fetch the actual point data from each of the returned tables
@@ -2659,6 +2659,7 @@ def getData():
             d['siteName'] = siteName
             d['sampleID'] = sampleID
             d['siteID'] = siteID
+            d['yearsBP'] = yearsBP
             out.append(d)
         except Exception as e: ## table doesn't exist, but record for table does exist --> oops
             conn.rollback()
@@ -2833,7 +2834,7 @@ def postData():
             SELECT
                 "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
                 variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
-                variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, yearsBP
+                variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, sources.producturl
             from rasterIndex
             INNER JOIN variables on rasterIndex.variableID=variables.variableID
             INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
@@ -2877,7 +2878,7 @@ def postData():
         cursor.execute(query, params)
         rows = cursor.fetchall()
         header = [ "tableName", "sourceID", "Model", "Producer", "ModelVersion", "variableID",
-        "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "yearsBP"]
+        "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "ProductCitation"]
         # ## fetch the actual point data from each of the returned tables
         t2 = datetime.datetime.now()
         print "Got table list in", t2 - t1
@@ -2903,6 +2904,7 @@ def postData():
                     d[col] = row[p]
                     p += 1
                 d['value'] = val ## this is the actual point value
+                d['yearsBP'] = yearsBP
                 siteOut['data'].append(d)
         print "---------------"
         out.append(siteOut)
