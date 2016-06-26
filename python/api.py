@@ -2759,258 +2759,258 @@ def getData():
             conn.rollback()
         finally:
             i += 1
-    r = JSONResponse(data = out, message="Interpolation is nearest neighbor to closest 1000 year slice.", status=200)
+    r = JSONResponse(data = out, message="Linear interpolation between two nearest neighbors.", status=200)
     return bottle.HTTPResponse(status=200, body= r.toJSON())
 
 # ## POST data
 # ## This uses post so it can send a bigger payload with {lat, lng, time} objects and get a list of responses in return
 # ## If this works, it prevents us from having to send individual api calls for sites, we can do it all in one
-# @post("/data")
-# def postData():
-#     """Get data from the raster datasets stored in the database for an array of [lat, lng, time] tuples.
-#     Filtering available on variables and sources.
-#     Spatial input:
-#         Latitude/Longitude: [supported]
-#         Bounding Box: [not yet implemented]
-#     Parameters:
-#         @:param: locations (array) [required]
-#             @:type: {
-#                 latitude: latitude (number),
-#                 longitude: longitude (number),
-#                 yearsBP: yearsBP  (number)
-#             }
-#         @:param: latitude (number) [required]
-#         @:param: longitude (number) [required]
-#         @:param: bbox [not yet implemented]
-#         @:param: yearsBP (number) [required]
-#         @:param: variableType (string) [optional]
-#         @:param: variablePeriod (integer) [optional]
-#         @:param: variablePeriodType (string) [optional]
-#         @:param: averagingPeriod (integer) [optional]
-#         @:param: averagingPeriodType (string) [optional]
-#         @:param: variableID (integer) [optional]
-#         @:param: sourceID (integer) [optional]
-#         @:param: modelName (string) [optional]
-#         @:param: modelVersion (number) [optional]
-#         @:param: scenario (string) [optional]
-#         @:param: resolution (number) [optional]
-#     :returns:
-#         HTTP Response
-#         HTTP Statuses: 200 (request successful)
-#         Example:
-#             {
-#               "success" : true,
-#               "timestamp" : "1/1/2000 5:17pm",
-#               "status" : 200,
-#               "message" : "",
-#               "data" : [
-#                 "layerID" : 231,
-#                 "variableID" :43,
-#                 "sourceID" :2,
-#                 "latitude" : 37.12,
-#                 "longitude" : -124.235,
-#                 "value" : 34.1,
-#                 "yearsBP" : 22000
-#               ]
-#             }
-#     Implementation Notes:
-#         See notes for GET
-#     """
-#     #TODO: Add interpolation between time period
-#     #TODO: Add bounding box
-#     r = request.json
-#     ## do basic type checking
-#     if 'locations' not in r:
-#         r = JSONResponse(data= [], message = "Required parameters not set.  Required parameters: Locations", status=400)
-#         return bottle.HTTPResponse(status=400, body=r.toJSON())
-#     i = 0
-#     while i < len(r['locations']):
-#         try:
-#             r['locations'][i]['latitude'] = float(r['locations'][i]['latitude'])
-#             r['locations'][i]['longitude'] = float(r['locations'][i]['longitude'])
-#             r['locations'][i]['yearsBP'] = float(r['locations'][i]['yearsBP'])
-#         except KeyError:
-#             r = JSONResponse(data= [], message = "Invalid formatting for locations, location index " + str(i), status=400)
-#             return bottle.HTTPResponse(status=400, body=r.toJSON())
-#         except ValueError:
-#             r = JSONResponse(data= [], message = "Encountered non-numeric location, location index " + str(i), status=400)
-#             return bottle.HTTPResponse(status=400, body=r.toJSON())
-#         i += 1
-#     print "Passed required variable checks."
-#
-#     ## all other parameters are optional and apply to the request as a whole
-#     ## these requests come from the json body though
-#     locations = r['locations']
-#     if 'variableType' not in r:
-#         variableType = None
-#     else:
-#         variableType = r['variableType'].lower()
-#     if 'variablePeriod' not in r:
-#         variablePeriod = None
-#     else:
-#         variablePeriod = r['variablePeriod']
-#     if 'variablePeriodType' not in r:
-#         variablePeriodType = None
-#     else:
-#         variablePeriodType = r['variablePeriodType'].lower()
-#     if 'variableUnits' not in r:
-#         variableUnits = None
-#     else:
-#         variableUnits = r['variableUnits'].lower()
-#     if 'averagingPeriod' not in r:
-#         averagingPeriod = None
-#     else:
-#         averagingPeriod = r['averagingPeriod']
-#     if 'averagingPeriodType' not in r:
-#         averagingPeriodType = None
-#     else:
-#         averagingPeriodType = r['averagingPeriodType'].lower()
-#     if 'variableID' not in r:
-#         variableID = None
-#     else:
-#         variableID = r['variableID']
-#     if 'sourceID' not in r:
-#         sourceID = None
-#     else:
-#         sourceID = r['sourceID']
-#     if 'sourceProducer' not in r:
-#         sourceProducer = None
-#     else:
-#         sourceProducer = r['sourceProducer'].lower()
-#     if 'modelName' not in r:
-#         modelName = None
-#     else:
-#         modelName = r['modelName'].lower()
-#     if 'modelVersion' not in r:
-#         modelVersion = None
-#     else:
-#         modelVersion = r['modelVersion'].lower()
-#     if 'resolution' not in r:
-#         resolution = None
-#     else:
-#         resolution = r['resolution']
-#     if 'modelScenario' not in r:
-#         modelScenario = None
-#     else:
-#         modelScenario = r['modelScenario']
-#     conn = connectToDefaultDatabase()
-#     cursor = conn.cursor()
-#     print "Collected query parameters."
-#     i = 0;
-#     t0 = datetime.datetime.now()
-#     ## now just iterate through and do the basic GETTING but for all locations in the request
-#     out = [] ## collect them all in here
-#     i = 0
-#     while i < len(locations):
-#         thisLocation = locations[i]
-#         latitude = thisLocation['latitude']
-#         longitude = thisLocation['longitude']
-#         yearsBP = thisLocation['yearsBP']
-#         t1 = datetime.datetime.now()
-#         try:
-#             siteName = thisLocation['siteName']
-#         except KeyError:
-#             siteName = ""
-#         try:
-#             siteID = thisLocation['siteID']
-#         except KeyError:
-#             siteID = ""
-#         roundYear = int(math.ceil(yearsBP / 1000.0)) * 1000 ## this is the interpolation
-#
-#         siteOut = {}
-#         siteOut['siteName'] = siteName
-#         siteOut['siteID'] = siteID
-#         siteOut['latitude'] = latitude
-#         siteOut['longitude'] = longitude
-#         siteOut['yearsBP'] = yearsBP
-#         siteOut['data'] = []
-#         # fetch the table names that match our query
-#         query = '''
-#             SELECT
-#                 "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
-#                 variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
-#                 variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, sources.producturl
-#             from rasterIndex
-#             INNER JOIN variables on rasterIndex.variableID=variables.variableID
-#             INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
-#             INNER JOIN    variableTypes on variables.variableType = variableTypes.variableTypeID
-#             INNER JOIN    variableUnits on variables.variableUnits = variableUnits.variableUnitID
-#             INNER JOIN    averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
-#             INNER JOIN    variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
-#             WHERE
-#             WHERE 1 = 1
-#                 AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation) )
-#                 AND (%(variablePeriod)s is NULL or %(variablePeriod)s = variables.variablePeriod )
-#                 AND (%(variablePeriodType)s is NULL or %(variablePeriodType)s LIKE lower(variablePeriodTypes.variablePeriodType) )
-#                 AND (%(averagingPeriod)s is NULL or %(averagingPeriod)s = variableAveraging )
-#                 AND (%(averagingPeriodType)s is NULL or %(averagingPeriodType)s LIKE lower(averagingPeriodTypes.averagingPeriodType) )
-#                 AND (%(variableUnits)s is NULL or %(variableUnits)s LIKE lower(variableUnits.variableUnitAbbreviation))
-#                 AND (%(variableID)s is NULL or %(variableID)s = variables.variableID)
-#                 AND (%(sourceID)s is NULL or %(sourceID)s = sources.sourceID)
-#                 AND (%(resolution)s is NULL or %(resolution)s = resolution)
-#                 AND (%(modelName)s is NULL or %(modelName)s LIKE lower(sources.model) )
-#                 AND (%(sourceProducer)s is NULL or %(sourceProducer)s LIKE lower(sources.producer) )
-#                 AND (%(modelVersion)s is NULL or %(modelVersion)s = sources.productVersion )
-#                 AND (%(modelScenario)s is NULL or %(modelScenario)s LIKE lower(scenario) )
-#                 AND (yearsBP <= %(yearsBP)s);
-#             '''
-#
-#         params = {
-#             'variableType' : variableType,
-#             'variablePeriod':variablePeriod,
-#             'variablePeriodType' :variablePeriodType,
-#             'variableUnits' : variableUnits,
-#             'variableID' : variableID,
-#             'averagingPeriod' : averagingPeriod,
-#             'averagingPeriodType' : averagingPeriodType,
-#             'sourceID': sourceID,
-#             'sourceProducer':sourceProducer,
-#             'modelName' :modelName,
-#             'modelVersion' : modelVersion,
-#             'resolution': resolution,
-#             'modelScenario' : modelScenario,
-#             'yearsBP' : roundYear
-#         }
-#         cursor.execute(query, params)
-#         rows = cursor.fetchall()
-#         header = [ "tableName", "sourceID", "Model", "Producer", "ModelVersion", "variableID",
-#         "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "ProductCitation"]
-#         # ## fetch the actual point data from each of the returned tables
-#         t2 = datetime.datetime.now()
-#         print "Got table list in", t2 - t1
-#         for row in rows:
-#             tableName = row[0]
-#             q = '''SELECT ST_Value(rast,ST_SetSRID(ST_MakePoint(%(longitude)s, %(latitude)s), 4326)) FROM public.''' + tableName + '''
-#                 WHERE ST_Intersects(rast, ST_SetSRID(ST_MakePoint(%(longitude)s, %(latitude)s), 4326)); '''
-#             params = { 'latitude' : latitude, 'longitude' : longitude}
-#             try:
-#                 cursor.execute(q, params)
-#             except Exception as e:
-#                 print str(e)
-#                 conn.rollback()
-#             for res in cursor.fetchall():
-#                 if len(res) == 0: ## no results were returned, likely because point was outside of north america
-#                     val = None
-#                 else:
-#                     val = res[0]
-#                 p = 0
-#                 d = {}
-#                 while p < len(header): ## add metadata about the table
-#                     col = header[p]
-#                     d[col] = row[p]
-#                     p += 1
-#                 d['value'] = val ## this is the actual point value
-#                 d['yearsBP'] = yearsBP
-#                 siteOut['data'].append(d)
-#         print "---------------"
-#         out.append(siteOut)
-#         i += 1
-#     t6 = datetime.datetime.now()
-#     print "------"
-#     print t6 - t0
-#     print "------"
-#     r = JSONResponse(data = out, message="Interpolation is nearest neighbor to closest 1000 year slice.", status=200)
-#     return bottle.HTTPResponse(status=200, body= r.toJSON())
+@post("/data")
+def postData():
+    """Get data from the raster datasets stored in the database for an array of [lat, lng, time] tuples.
+    Filtering available on variables and sources.
+    Spatial input:
+        Latitude/Longitude: [supported]
+        Bounding Box: [not yet implemented]
+    Parameters:
+        @:param: locations (array) [required]
+            @:type: {
+                latitude: latitude (number),
+                longitude: longitude (number),
+                yearsBP: yearsBP  (number)
+            }
+        @:param: latitude (number) [required]
+        @:param: longitude (number) [required]
+        @:param: bbox [not yet implemented]
+        @:param: yearsBP (number) [required]
+        @:param: variableType (string) [optional]
+        @:param: variablePeriod (integer) [optional]
+        @:param: variablePeriodType (string) [optional]
+        @:param: averagingPeriod (integer) [optional]
+        @:param: averagingPeriodType (string) [optional]
+        @:param: variableID (integer) [optional]
+        @:param: sourceID (integer) [optional]
+        @:param: modelName (string) [optional]
+        @:param: modelVersion (number) [optional]
+        @:param: scenario (string) [optional]
+        @:param: resolution (number) [optional]
+    :returns:
+        HTTP Response
+        HTTP Statuses: 200 (request successful)
+        Example:
+            {
+              "success" : true,
+              "timestamp" : "1/1/2000 5:17pm",
+              "status" : 200,
+              "message" : "",
+              "data" : [
+                "layerID" : 231,
+                "variableID" :43,
+                "sourceID" :2,
+                "latitude" : 37.12,
+                "longitude" : -124.235,
+                "value" : 34.1,
+                "yearsBP" : 22000
+              ]
+            }
+    Implementation Notes:
+        See notes for GET
+    """
+    #TODO: Add interpolation between time period
+    #TODO: Add bounding box
+    r = request.json
+    ## do basic type checking
+    if 'locations' not in r:
+        r = JSONResponse(data= [], message = "Required parameters not set.  Required parameters: Locations", status=400)
+        return bottle.HTTPResponse(status=400, body=r.toJSON())
+    i = 0
+    while i < len(r['locations']):
+        try:
+            r['locations'][i]['latitude'] = float(r['locations'][i]['latitude'])
+            r['locations'][i]['longitude'] = float(r['locations'][i]['longitude'])
+            r['locations'][i]['yearsBP'] = float(r['locations'][i]['yearsBP'])
+        except KeyError:
+            r = JSONResponse(data= [], message = "Invalid formatting for locations, location index " + str(i), status=400)
+            return bottle.HTTPResponse(status=400, body=r.toJSON())
+        except ValueError:
+            r = JSONResponse(data= [], message = "Encountered non-numeric location, location index " + str(i), status=400)
+            return bottle.HTTPResponse(status=400, body=r.toJSON())
+        i += 1
+    print "Passed required variable checks."
+
+    ## all other parameters are optional and apply to the request as a whole
+    ## these requests come from the json body though
+    locations = r['locations']
+    if 'variableType' not in r:
+        variableType = None
+    else:
+        variableType = r['variableType'].lower()
+    if 'variablePeriod' not in r:
+        variablePeriod = None
+    else:
+        variablePeriod = r['variablePeriod']
+    if 'variablePeriodType' not in r:
+        variablePeriodType = None
+    else:
+        variablePeriodType = r['variablePeriodType'].lower()
+    if 'variableUnits' not in r:
+        variableUnits = None
+    else:
+        variableUnits = r['variableUnits'].lower()
+    if 'averagingPeriod' not in r:
+        averagingPeriod = None
+    else:
+        averagingPeriod = r['averagingPeriod']
+    if 'averagingPeriodType' not in r:
+        averagingPeriodType = None
+    else:
+        averagingPeriodType = r['averagingPeriodType'].lower()
+    if 'variableID' not in r:
+        variableID = None
+    else:
+        variableID = r['variableID']
+    if 'sourceID' not in r:
+        sourceID = None
+    else:
+        sourceID = r['sourceID']
+    if 'sourceProducer' not in r:
+        sourceProducer = None
+    else:
+        sourceProducer = r['sourceProducer'].lower()
+    if 'modelName' not in r:
+        modelName = None
+    else:
+        modelName = r['modelName'].lower()
+    if 'modelVersion' not in r:
+        modelVersion = None
+    else:
+        modelVersion = r['modelVersion'].lower()
+    if 'resolution' not in r:
+        resolution = None
+    else:
+        resolution = r['resolution']
+    if 'modelScenario' not in r:
+        modelScenario = None
+    else:
+        modelScenario = r['modelScenario']
+    conn = connectToDefaultDatabase()
+    cursor = conn.cursor()
+    print "Collected query parameters."
+    i = 0;
+    t0 = datetime.datetime.now()
+    ## now just iterate through and do the basic GETTING but for all locations in the request
+    out = [] ## collect them all in here
+    i = 0
+    while i < len(locations):
+        thisLocation = locations[i]
+        latitude = thisLocation['latitude']
+        longitude = thisLocation['longitude']
+        yearsBP = thisLocation['yearsBP']
+        t1 = datetime.datetime.now()
+        try:
+            siteName = thisLocation['siteName']
+        except KeyError:
+            siteName = ""
+        try:
+            siteID = thisLocation['siteID']
+        except KeyError:
+            siteID = ""
+        roundYear = int(math.ceil(yearsBP / 1000.0)) * 1000 ## this is the interpolation
+
+        siteOut = {}
+        siteOut['siteName'] = siteName
+        siteOut['siteID'] = siteID
+        siteOut['latitude'] = latitude
+        siteOut['longitude'] = longitude
+        siteOut['yearsBP'] = yearsBP
+        siteOut['data'] = []
+        # fetch the table names that match our query
+        query = '''
+            SELECT
+                "tableName", sources.sourceID, sources.model, sources.producer, sources.productVersion, variables.variableID,
+                variables.variabledescription, variableTypes.variableType, variableUnits.variableUnitAbbreviation, variables.variablePeriod,
+                variablePeriodTypes.variablePeriodType, variables.variableAveraging, averagingPeriodTypes.averagingPeriodType, sources.producturl
+            from rasterIndex
+            INNER JOIN variables on rasterIndex.variableID=variables.variableID
+            INNER JOIN    sources on rasterIndex.sourceID = sources.sourceID
+            INNER JOIN    variableTypes on variables.variableType = variableTypes.variableTypeID
+            INNER JOIN    variableUnits on variables.variableUnits = variableUnits.variableUnitID
+            INNER JOIN    averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
+            INNER JOIN    variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
+            WHERE
+            WHERE 1 = 1
+                AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation) )
+                AND (%(variablePeriod)s is NULL or %(variablePeriod)s = variables.variablePeriod )
+                AND (%(variablePeriodType)s is NULL or %(variablePeriodType)s LIKE lower(variablePeriodTypes.variablePeriodType) )
+                AND (%(averagingPeriod)s is NULL or %(averagingPeriod)s = variableAveraging )
+                AND (%(averagingPeriodType)s is NULL or %(averagingPeriodType)s LIKE lower(averagingPeriodTypes.averagingPeriodType) )
+                AND (%(variableUnits)s is NULL or %(variableUnits)s LIKE lower(variableUnits.variableUnitAbbreviation))
+                AND (%(variableID)s is NULL or %(variableID)s = variables.variableID)
+                AND (%(sourceID)s is NULL or %(sourceID)s = sources.sourceID)
+                AND (%(resolution)s is NULL or %(resolution)s = resolution)
+                AND (%(modelName)s is NULL or %(modelName)s LIKE lower(sources.model) )
+                AND (%(sourceProducer)s is NULL or %(sourceProducer)s LIKE lower(sources.producer) )
+                AND (%(modelVersion)s is NULL or %(modelVersion)s = sources.productVersion )
+                AND (%(modelScenario)s is NULL or %(modelScenario)s LIKE lower(scenario) )
+                AND (yearsBP <= %(yearsBP)s);
+            '''
+
+        params = {
+            'variableType' : variableType,
+            'variablePeriod':variablePeriod,
+            'variablePeriodType' :variablePeriodType,
+            'variableUnits' : variableUnits,
+            'variableID' : variableID,
+            'averagingPeriod' : averagingPeriod,
+            'averagingPeriodType' : averagingPeriodType,
+            'sourceID': sourceID,
+            'sourceProducer':sourceProducer,
+            'modelName' :modelName,
+            'modelVersion' : modelVersion,
+            'resolution': resolution,
+            'modelScenario' : modelScenario,
+            'yearsBP' : roundYear
+        }
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        header = [ "tableName", "sourceID", "Model", "Producer", "ModelVersion", "variableID",
+        "VariableDescription", "VariableType", "variableUnits", "variablePeriod", "variablePeriodType", "averagingPeriod", "averagingPeriodType", "ProductCitation"]
+        # ## fetch the actual point data from each of the returned tables
+        t2 = datetime.datetime.now()
+        print "Got table list in", t2 - t1
+        for row in rows:
+            tableName = row[0]
+            q = '''SELECT ST_Value(rast,ST_SetSRID(ST_MakePoint(%(longitude)s, %(latitude)s), 4326)) FROM public.''' + tableName + '''
+                WHERE ST_Intersects(rast, ST_SetSRID(ST_MakePoint(%(longitude)s, %(latitude)s), 4326)); '''
+            params = { 'latitude' : latitude, 'longitude' : longitude}
+            try:
+                cursor.execute(q, params)
+            except Exception as e:
+                print str(e)
+                conn.rollback()
+            for res in cursor.fetchall():
+                if len(res) == 0: ## no results were returned, likely because point was outside of north america
+                    val = None
+                else:
+                    val = res[0]
+                p = 0
+                d = {}
+                while p < len(header): ## add metadata about the table
+                    col = header[p]
+                    d[col] = row[p]
+                    p += 1
+                d['value'] = val ## this is the actual point value
+                d['yearsBP'] = yearsBP
+                siteOut['data'].append(d)
+        print "---------------"
+        out.append(siteOut)
+        i += 1
+    t6 = datetime.datetime.now()
+    print "------"
+    print t6 - t0
+    print "------"
+    r = JSONResponse(data = out, message="Interpolation is nearest neighbor to closest 1000 year slice.", status=200)
+    return bottle.HTTPResponse(status=200, body= r.toJSON())
 
 @route("/data", method=['OPTIONS'])
 def returnOptions():
