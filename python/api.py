@@ -2937,7 +2937,6 @@ def postData():
             INNER JOIN    variableUnits on variables.variableUnits = variableUnits.variableUnitID
             INNER JOIN    averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID
             INNER JOIN    variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID
-            WHERE
             WHERE 1 = 1
                 AND (%(variableType)s is NULL or %(variableType)s LIKE lower(variableTypes.variableTypeAbbreviation) )
                 AND (%(variablePeriod)s is NULL or %(variablePeriod)s = variables.variablePeriod )
