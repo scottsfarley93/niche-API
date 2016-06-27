@@ -2739,6 +2739,8 @@ def getData():
             f = interpolate.interp1d(x, y)
             val = f(predPoint)
             val = float(val)
+            if numpy.isnan(val):
+                val = None
             p = 0
             d = {}
             while p < len(header): ## add metadata about the table
@@ -2753,7 +2755,6 @@ def getData():
             d['siteID'] = siteID
             d['yearsBP'] = yearsBP
             out.append(d)
-
         except Exception as e: ## table doesn't exist, but record for table does exist --> oops
             print str(e)
             conn.rollback()
