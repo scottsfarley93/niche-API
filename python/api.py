@@ -2945,7 +2945,7 @@ def postData():
                 AND (%(averagingPeriod)s is NULL or %(averagingPeriod)s = variableAveraging )
                 AND (%(averagingPeriodType)s is NULL or %(averagingPeriodType)s LIKE lower(averagingPeriodTypes.averagingPeriodType) )
                 AND (%(variableUnits)s is NULL or %(variableUnits)s LIKE lower(variableUnits.variableUnitAbbreviation))
-                AND (%(variableID)s is NULL or %(variableID)s = variables.variableID)
+                AND (variables.variableID = 9 OR variables.variableID = 10 OR variables.variableID = 12 OR variables.variableID = 13 OR variables.variableID = 14 OR variables.variableID = 16)
                 AND (%(sourceID)s is NULL or %(sourceID)s = sources.sourceID)
                 AND (%(resolution)s is NULL or %(resolution)s = resolution)
                 AND (%(modelName)s is NULL or %(modelName)s LIKE lower(sources.model) )
