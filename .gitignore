@@ -1,4 +1,4 @@
 
 python/conf.txt
-.*
+.DS_STORE
 conf.js
