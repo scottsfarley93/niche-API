@@ -11,8 +11,18 @@
     "express": "latest",
     "forever": "^0.15.2",
     "httpdispatcher": "latest",
-    "pg": "latest"
+    "pg": "latest",
+    "swagger" :"latest",
+    "pg": "latest",
+    "pg-promise": "latest",
+    "fs": "latest",
+    "express-session": "latest",
+    "bluebird": "latest",
+    "body-parser": "latest",
+     "cookie-parser": "latest",
+     "session-file-store": "latest",
   },
+  "repository" : "https://github.com/scottsfarley93/niche-api",
   "author": "Scott Farley",
   "license": "MIT"
 }
