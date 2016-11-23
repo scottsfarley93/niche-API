@@ -19,23 +19,32 @@ function getVariables(req, res) {
       inner join variableUnits on variables.variableUnits = variableUnits.variableUnitID \
       inner join variablePeriodTypes on variables.variablePeriod = variablePeriodTypes.variablePeriodTypeID \
       inner join averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID \
-      WHERE  ($(variableid) is NULL or $(variableid) = variables.variableid);"
-
-
+      WHERE 1=1;"
   var queryVals = {'variableType': variableType,
-                  'variablePeriod' : variablePeriod,
+                    'variablePeriod' : variablePeriod,
                     'variablePeriodType':variablePeriodType,
-                         'averagingPeriod' : averagingPeriod,
-                         'averagingPeriodType' : averagingPeriodType,
-                         'variableUnits' : variableUnits,
-                       'variableID' : variableID}
+                    'averagingPeriod' : averagingPeriod,
+                    'averagingPeriodType' : averagingPeriodType,
+                    'variableUnits' : variableUnits}
+
   db.any(query, queryVals)
     .then(function(data){
-      console.log(data)
-      res.json(data)
+      var ts = new Date().toJSON()
+      console.log("Success")
+      var resOut = {
+        "success" : true,
+        "timestamp" : ts,
+        data: data
+      }
+      res.json(resOut)
     }).catch(function(err){
       console.log(err)
-      res.json(err)
+      console.log("Fail")
+      var resOut = {
+        "status" : "500",
+        "message" : "Failed Database Request"
+      }
+      res.json(resOut)
     })
 }
 

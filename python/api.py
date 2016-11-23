@@ -81,8 +81,7 @@ def testConnection():
 ## GET search variables
 @get("/variables")
 def getVariables():
-    '''v
-        Parameters:
+    '''Parameters:
             @:param: variableType (string) [optional]
             @:param: variablePeriod (integer) [optional]
             @:param: variablePeriodType (string) [optional]

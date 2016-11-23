@@ -1,0 +1,33 @@
+SELECT rid, ST_Value(r.rast, 3,
+	(ST_Dump(p.the_geom)).geom) As band3
+FROM
+	public.app AS p,
+	data_a14ee15cb03411e6a0509cf387ae7186 AS r
+WHERE
+	ST_Intersects(r.rast, ST_SetSRID(p.the_geom, 4326)::geometry, 1);
+
+
+
+  rasterQuery = "SELECT(\
+    belowVal + ((aboveVal - belowVal)/ (aboveYear - belowYear))*(year - belowYear)) as interp  FROM (\
+      SELECT \
+      ST_Value(rast, $3, ST_SetSRID(ST_MakePoint($1, $2), 4326)) as belowVal, \
+      ST_Value(rast, $4, ST_SetSRID(ST_MakePoint($1, $2), 4326)) as aboveVal, \
+      $5:value as belowYear, $6:value as aboveYear, \
+      $7:value as year\
+      FROM \
+      $8:value \
+      WHERE ST_Intersects(rast, ST_SetSRID(ST_MakePoint($1, $2), 4326))\
+    ) as vals;"
+
+    SELECT(
+    belowVal + ((aboveVal - belowVal)/ (aboveYear - belowYear))*(year - belowYear)) as interp  FROM (
+    SELECT
+    ST_Value(rast, 1, pt) as belowVal,
+    ST_Value(rast, 2, pt) as aboveVal,
+    1000 as belowYear, 2000 as aboveYear,
+    1900 as year
+    FROM
+    data_28e09e9cb03211e694989cf387ae7186,
+    (select(ST_SetSRID(ST_MakePoint(-90, 37), 4326)::geometry) as pt) as makePoint
+    WHERE ST_Intersects(rast, pt)) as vals;

@@ -23,67 +23,346 @@ consumes:
 produces:
   - application/json
 paths:
-  /hello:
+  /variables:
     # binds a127 app logic to a route
-    x-swagger-router-controller: hello_world
+    x-swagger-router-controller: variables
     get:
-      description: Returns 'Hello' to the caller
-      # used as the method name of the controller
-      operationId: hello
+      description: Returns a list of the variables available in the database to the user.
+      operationId: getVariables
       parameters:
-        - name: name
+        - name: variableType
           in: query
-          description: The name of the person to whom to say hello
+          description: Variable type filter (e.g., Precipitation)
           required: false
           type: string
+          
+        - name: variablePeriod
+          in: query
+          description: Variable period filter (e.g., 1)
+          required: false
+          type: integer
+          
+        
+        - name: variablePeriodType
+          in: query
+          description: Variable period type specification (e.g., month)
+          required: false
+          type: string
+        
+        - name: averagingPeriod
+          in: query
+          description: Period over which the variable has been averaged
+          required: false
+          type: integer
+        
+        - name: avergagingPeriodType
+          in: query
+          description: Type of period over which the variable has been averaged.
+          required: false
+          type: integer
+          
+        - name: variableUnits
+          in: query
+          description: Units in which the variable is measured.
+          required: false
+          type: integer
+          
       responses:
         "200":
           description: Success
           schema:
             # a pointer to a definition
-            $ref: "#/definitions/HelloWorldResponse"
+            $ref: "#/definitions/VariableResponse"
         # responses may fall through to errors
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
             
-  /variables:
-    # binds a127 app logic to a route
-    x-swagger-router-controller: variables
+  /swagger:
+    x-swagger-pipe: swagger_raw
+    
+  /timeseries:
+    x-swagger-router-controller: timeseries
     get:
-      description: Returns 'Hello' to the caller
-      operationId: getVariables
+      description: Get all time points in the database at a single space location for a single variable
+      operationId: getTimeseries
       parameters:
-        - name: name
+        - name: latitude
+          required: true
+          type: number
+          description: Latitude of POI
           in: query
-          description: The name of the person to whom to say hello
-          required: false
-          type: string
+        - name: longitude
+          required: true
+          type: number
+          description: Longitude of POI
+          in: query
+        - name: variableID
+          required: true
+          type: number
+          description: Database ID of variable of interest
+          in: query
+        - name: sourceID
+          required: true
+          type: number
+          description: Database ID of source of interest
+          in: query
       responses:
-        "200":
+        "200": 
           description: Success
-          schema:
-            # a pointer to a definition
-            $ref: "#/definitions/HelloWorldResponse"
-        # responses may fall through to errors
+          schema: 
+            $ref: "#/definitions/TimeSeriesResponse"
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /swagger:
-    x-swagger-pipe: swagger_raw
+            
+  /data:
+    x-swagger-router-controller: data
+    get:
+      description: Get data for a single space-time point for a since single source and variable
+      operationId: getDataPoint
+      parameters:
+        - name: latitude
+          required: true
+          type: number
+          description: Latitude of POI
+          in: query
+        - name: longitude
+          required: true
+          type: number
+          description: Longitude of POI
+          in: query
+        - name: variableID
+          required: true
+          type: number
+          description: Database ID of variable of interest
+          in: query
+        - name: sourceID
+          required: true
+          type: number
+          description: Database ID of source of interest
+          in: query
+        - name: yearsBP
+          required: true
+          type: number
+          description: years before present of data point
+          in: query
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/DataResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      operationId: postData
+      description: Get data for an array of space-time points for a single source and variable
+      parameters:
+        - name: data
+          schema:
+            $ref: "#/definitions/PostDataRequest"
+          in: body
+          required: false
+          description: An array of space-time locations to get data for.
+      responses:
+        "200":
+          description: Success
+          schema: 
+            $ref: "#/definitions/DataResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+          
+      
+        
+        
 # complex objects have schema definitions
 definitions:
-  HelloWorldResponse:
-    required:
-      - message
-    properties:
-      message:
+  Variable:
+    required: 
+      - variableType
+      - variableUnits
+      - variablePeriod
+      - variablePeriodType
+      - averagingPeriod
+      - averagingPeriodType
+      - variableID
+      - variableDescription
+    properties: 
+      variableType:
+        description: What the variable represents
         type: string
+      variableUnits:
+        description: How the variable is measured
+        type: string
+      variablePeriod:
+        description: Period that the variable represents
+        type: integer
+      variablePeriodType:
+        description: Type of period represented by the variable
+        type: string
+      averagingPeriod:
+        description: Period over which the variable is averaged.
+        type: integer
+      averagingPeriodType:
+        description: Type of period over which the variable is average.
+        type: string
+      variableID:
+        type: integer
+        description: Database ID of the variable
+      variableDescription:
+        type: string
+        description: Plain text description of the variable.
+  
+  TimeSeriesPoint:
+    properties:
+      id: 
+        type: integer
+      value:
+        type: number
+      time:
+        type: number
+        
+  TimeSeriesResponse:
+    required:
+      - success
+      - timestamp
+      - latitude
+      - longitude
+      - data
+    properties:
+      success:
+        type: boolean
+        description: Flag to indicate whether the server responded successfully.
+      timestamp:
+        type: string
+        format: date-time
+        description: Time at which the response was minted by the server
+      latitude:
+        type: number
+        format: float
+      longitude:
+        type: number
+        format: float
+      variable:
+        $ref: "#/definitions/Variable"
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/TimeSeriesPoint"
+          
+  DataPoint:
+    properties:
+      year:
+        type: integer
+        description: Year before present represented by the response
+      above: 
+        type: number
+        description: Value of the time slice above the year in the interpolation
+      below:
+        type: number
+        description: Value of the time slice below the year in the interpolation
+      yearAbove:
+        type: integer
+        description: Year above in the interpolation
+      yearBelow:
+        type: integer
+        description: Year below in the interpolation
+      interp:
+        type: number
+        description: Interpolated variable value between the yearAbove and the yearBelow
+      latitude: 
+        type: number
+        description: Latitude of POI
+      longitude:
+        type: number
+        description: Longitude of POI
+        
+  DataResponse:
+    properties:
+      success:
+        type: boolean
+        description: Flag to indicate whether the server responded successfully.
+      timestamp:
+        type: string
+        format: date-time
+        description: Time at which the response was minted by the server
+      variableID:
+        type: integer
+        description: Variable represented by the response
+      sourceID:
+        type: integer
+        description: Data source of the response
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/DataPoint"
+      
+  VariableResponse:
+    required:
+      - success
+      - timestamp
+      - data
+    properties:
+      success:
+        type: boolean
+        description: Flag to indicate whether the server responded successfully.
+      timestamp:
+        type: string
+        format: date-time
+        description: Time at which the response was minted by the server
+      data:
+        type: array
+        items:
+          # $ref: "#/definitions/Variable"
+          type: object
+        
   ErrorResponse:
     required:
       - message
+      - status
     properties:
       message:
         type: string
+      status:
+        type: integer
+        
+  PointRequest:
+    required:
+     - latitude
+     - longitude
+     - year
+    properties:
+      latitude:
+        type: number
+        description: Latitude of POI
+      longitude:
+        type: number
+        description: Longitude of POI
+      year:
+        type: integer
+        description: Years before present of location of interest
+      id:
+        type: integer
+        description: Optional ID number for relating to neotoma or other site identifiers.
+  
+  PostDataRequest:
+    properties:
+      points:
+        type: array
+        items:
+          $ref: "#/definitions/PointRequest"
+      variableID:
+        type: integer
+        description: Database ID for the requested variable
+      sourceID:
+        type: integer
+        description: Database ID for the requested data source
+            
+
+        

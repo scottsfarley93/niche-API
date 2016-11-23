@@ -23,7 +23,10 @@
     "bluebird": "latest",
     "body-parser": "latest",
      "cookie-parser": "latest",
-     "session-file-store": "latest"
+     "session-file-store": "latest",
+     "everpolate" : "latest",
+     "cors":"latest",
+     "compression" : "latest"
   },
   "devDependencies": {
     "should": "^7.1.0",
