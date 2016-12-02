@@ -37,7 +37,10 @@ function getDataPoint(req, res) {
           //use linear interpolation between two nearest time slices
           rasterQuery = "\
           SELECT(\
-            belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yr - yearBelow)) as value,\
+              CASE \
+            WHEN (yearAbove - yearBelow) = 0 THEN belowVal \
+            ELSE belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yearBP - yearBelow) \
+                END ) as value, \
                 yearBP\
                FROM (\
 		      SELECT\
@@ -137,15 +140,18 @@ postData = function(req, res){
             .then(function(tabledata){
               // select points from the point request table, then select the raster values at those space-time locations
                 tableName = tabledata['tableName']
-                rasterQuery = "SELECT(\
-                    	belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yr - yearBelow)) as value,\
-                      yr, id \
+                rasterQuery = "  SELECT(\
+                      CASE \
+                  	WHEN (yearAbove - yearBelow) = 0 THEN belowVal \
+                  	ELSE belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yearBP - yearBelow) \
+                        END ) as value,\
+                      yearBP, id \
                         FROM (\
                     SELECT\
                     	ST_Value(rast, bandBelow, pt) as belowVal,\
                     	ST_Value(rast, bandAbove, pt) as aboveVal,\
                     	yearBelow, yearAbove,\
-                    	yr, \
+                    	yearBP, \
                       id \
                     FROM\
                     $1:value,\
@@ -154,7 +160,7 @@ postData = function(req, res){
                     	p.yearAbove as yearAbove, \
                     	p.bandBelow as bandBelow, \
                     	p.bandAbove as bandAbove,\
-                    	p.yr as yr, \
+                    	p.yr as yearBP, \
                       p.id as id \
                     	from pointrequests as p WHERE callID = $2) as makePoint\
                     WHERE ST_Intersects(rast, pt)) as vals;"

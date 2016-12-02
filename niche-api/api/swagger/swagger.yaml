@@ -8,7 +8,7 @@ info:
   description: REST API to access gridded climate model data at specific points in time.  Developed specifically to support Ice Age Mapper / Niche Viewer, and to tie into morphospace visualizations of NeotomaDB data. Enables users to select climate data at single space-time points, arrays of space-time points, or time series at single points.  University of Wisconsin, Madison Department of Geography.
   version: "2.0.0" ## version 2 uses node bindings
 # during dev, should point to your local machine
-host: localhost:10010
+host: grad.geography.wisc.edu:8080
 # basePath prefixes all resource paths 
 basePath: /
 # 
