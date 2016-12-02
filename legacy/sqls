@@ -1,4 +1,4 @@
-SELECT rid, ST_Value(r.rast, 3,
+cSELECT rid, ST_Value(r.rast, 3,
 	(ST_Dump(p.the_geom)).geom) As band3
 FROM
 	public.app AS p,

@@ -251,7 +251,7 @@ paths:
   /sources:
     x-swagger-router-controller: sources
     get:
-      description: Get a list of sources in the database.
+      description: Get a list of data sources/models in the database.
       operationId: getSources
       parameters:
         - name: sourceId
@@ -280,7 +280,35 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/ErrorResponse"         
+            $ref: "#/definitions/ErrorResponse"   
+            
+  /variableUnits:
+    x-swagger-router-controller: variableUnits
+    get:
+      description: Get a list of variable units in the database.
+      operationId: getVariableUnits
+      parameters:
+        - name: variableUnitId
+          required: false
+          type: number
+          description: Database ID of the variableUnit.
+          in: query
+          
+        - name: variableUnitAbbreviation
+          required: false
+          type: string
+          description: Abbreviation of the variable unit in SI units.
+          in: query
+        
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GenericResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"               
         
         
 # complex objects have schema definitions

@@ -16,73 +16,54 @@ function getDataPoint(req, res) {
 
   var db = global.createConnection()
 
-  //sql to get the name of the table to go to
   var query1 = "SELECT * from rasterindex \
     where 1=1 AND \
-    variableid = $(variableID) AND sourceid = $(sourceID)\
-    ;"
-
-  db.one(query1, {"variableID": variableID, "sourceID":sourceID})
-    .then(function(tabledata){
-      tableName = tabledata['tableName']
-      //find the closest band
-      query2 = "SELECT * from bandindex;"
-      db.any(query2)
-        .then(function(bandindex){
-          years = []
-          bands = []
-          for (band in bandindex){
-            years.push(bandindex[band]['bandvalue'])
-            bands.push(bandindex[band]['bandnumber'])
-          }
-          //find the closest years and assocaited band index
-          closestYearAbove = closestAbove(yearBP, years)
-          closestYearBelow = closestBelow(yearBP, years)
-          closestBandAbove = bands[years.indexOf(closestYearAbove)]
-          closestBandBelow = bands[years.indexOf(closestYearBelow)]
-
-          //define sql query
-          closestQuery = "SELECT \
-            ST_Value(rast, $3, ST_SetSRID(ST_MakePoint($1, $2), 4326)) as belowVal, \
-            ST_Value(rast, $4, ST_SetSRID(ST_MakePoint($1, $2), 4326)) as aboveVal\
-            FROM "
-          closestQuery += tableName
-          closestQuery += " WHERE ST_Intersects(rast, ST_SetSRID(ST_MakePoint($1, $2), 4326));"
-
-          closestQueryVals = [longitude, latitude, closestBandBelow, closestBandAbove]
-          db.any(closestQuery, closestQueryVals)
-            .then(function(rasterdata){
-              //do linear interpolation
-              valAbove = rasterdata[0]['aboveval']
-              valBelow = rasterdata[0]['belowval']
-              interpValue = linear(yearBP, [closestYearBelow, closestYearAbove], [valBelow, valAbove ])[0]
-              if (isNaN(interpValue)){
-                interpValue = valAbove
+    variableid = $(variableID) AND sourceid = $(sourceID);"
+  //query for the table
+  db.oneOrNone(query1, {"variableID": variableID, "sourceID":sourceID})
+      .then(function(tabledata){
+          //get the value for every point in the Request
+          //first assemble all of the requests
+          tableName = tabledata['tableName']
+          rasterQuery = "\
+          SELECT(\
+            belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yr - yearBelow)) as value,\
+                yr\
+               FROM (\
+		      SELECT\
+			ST_Value(rast, $5, pt) as belowVal,\
+			ST_Value(rast, $6, pt) as aboveVal,\
+			$7 as yearAbove, $8 as yearBelow,\
+			$4 as yr\
+		      FROM\
+			$1:value, (SELECT ST_SetSRID(ST_MakePoint($2, $3), 4326) as pt) as makePoint \
+		      WHERE \
+		      ST_Intersects(rast, pt)\
+		  ) as vals;"
+              yearabove = closestAbove(yearBP, global.years)
+              yearbelow = closestBelow(yearBP, global.years)
+              bandabove = global.bands[global.years.indexOf(yearabove)]
+              bandbelow = global.bands[global.years.indexOf(yearbelow)]
+          console.log([tableName, longitude, latitude, yearBP, bandbelow, bandabove, yearabove, yearbelow])
+          db.any(rasterQuery, [tableName, longitude, latitude, yearBP, bandbelow, bandabove, yearabove, yearbelow])
+            .then(function(data){
+              var ts = new Date().toJSON()
+              console.log("Success")
+              var resOut = {
+                "success" : true,
+                "timestamp" : ts,
+                data: data
               }
-              pt = {
-                "value": interpValue,
-                "year" : yearBP,
-                "latitude": latitude,
-                "longitude" : longitude
-              }
-              out = {
-                "success": true,
-                "timestamp" : new Date().toJSON(),
-                "variableID" : variableID,
-                "sourceID" : sourceID,
-                "data": [pt]
-              }
-              res.json(out)
-            }).catch(function(err){
-              res.json(err)
+              res.json(resOut)
             })
-        })
-        .catch(function(err){
-          res.json(err)
-        })
-    }).catch(function(err){
-      res.json(err)
-    })
+            .catch(function(err){
+              res.json(err)
+              console.log(err)
+            })
+      }).catch(function(err){
+        console.log(err)
+        res.json(err)
+      })
 }
 
 postData = function(req, res){
