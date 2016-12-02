@@ -16,6 +16,17 @@ app.use(cors())
 app.use(bodyParser({limit: '50mb'}));
 app.use(compression())
 
+//set up logging
+function logCall (req, res, next) {
+   console.log("-------" + new Date().toJSON() + "------")
+   console.log(req.method)
+   console.log(req.path)
+
+   next()
+}
+
+app.use(logCall)
+
 //read the configuration file with the connection details
 global.conf = JSON.parse(fs.readFileSync('conf.js', 'utf8'))
 
@@ -28,10 +39,27 @@ global.createConnection =function(){
       password: global.conf.password
   };
   var db = pgp(cn); //do the connection using pg-promise library
+  console.log("Created connection to database.")
   return db
 }
-console.log(global.conf)
 
+//get a list of the bands so we don't have to do it on every call
+
+var db = global.createConnection()
+var query2 = "SELECT * from bandindex;"
+db.any(query2)
+.then(function(bandindex){
+  global.years = []
+  global.bands = []
+  for (var band in bandindex){
+    global.years.push(bandindex[band]['bandvalue'])
+    global.bands.push(bandindex[band]['bandnumber'])
+  }
+  console.log("Got band info.")
+})
+.catch(function(err){
+  console.log(err)
+})
 
 module.exports = app; // for testing
 

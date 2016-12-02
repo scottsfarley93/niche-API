@@ -26,7 +26,8 @@
      "session-file-store": "latest",
      "everpolate" : "latest",
      "cors":"latest",
-     "compression" : "latest"
+     "compression" : "latest",
+     "node-uuid":"latest"
   },
   "devDependencies": {
     "should": "^7.1.0",

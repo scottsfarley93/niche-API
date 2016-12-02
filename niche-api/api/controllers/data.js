@@ -1,6 +1,10 @@
 
 var util = require('util');
-var linear = require('everpolate').linear
+var uuid = require('node-uuid');
+var promise = require('bluebird'); //promise library for pgp to run on
+var pgp = require('pg-promise')( //postgres promise library makes it easier to execute user queries
+  {promiseLib: promise}
+);
 
 function getDataPoint(req, res) {
   // variables defined in the Swagger document can be referenced using req.swagger.params.{parameter_name}
@@ -90,107 +94,91 @@ postData = function(req, res){
   var sourceID = bodyContent.sourceID
   var db = global.createConnection()
 
-  //sql to get the name of the table to go to
-  var query1 = "SELECT * from rasterindex \
-    where 1=1 AND \
-    variableid = $(variableID) AND sourceid = $(sourceID);"
-  //query for the table
-  db.oneOrNone(query1, {"variableID": variableID, "sourceID":sourceID})
-      .then(function(tabledata){
-        tableName = tabledata['tableName']
-        //find the band listing
-        query2 = "SELECT * from bandindex;"
-        db.any(query2)
-            .then(function(bandindex){
-
-              //process the band info
-              years = []
-              bands = []
-              for (i =0; i< bandindex.length; i++){
-                years.push(+bandindex[i]['bandvalue'])
-                bands.push(+bandindex[i]['bandnumber'])
-              }
-          //get the value for every point in the Request
-          //first assemble all of the requests
-
-          rasterQuery = "SELECT(\
-              	belowVal + ((aboveVal - belowVal)/ (yearAbove - yearBelow))*(yr - yearBelow)) as interp  FROM (\
-              SELECT\
-              	ST_Value(rast, bandBelow, pt) as belowVal,\
-              	ST_Value(rast, bandAbove, pt) as aboveVal,\
-              	yearBelow, yearAbove,\
-              	yr\
-              FROM\
-              data_28e09e9cb03211e694989cf387ae7186,\
-              	(select p.geom as pt, \
-              	p.yearBelow as yearBelow, \
-              	p.yearAbove as yearAbove, \
-              	p.bandBelow as bandBelow, \
-              	p.bandAbove as bandAbove,\
-              	p.yr as yr \
-              	from pointrequests as p) as makePoint\
-              WHERE ST_Intersects(rast, pt)) as vals;"
-
-          // db.tx(function(t){
-          //   requests = []
-          //
-          //   for (ptIdx in bodyContent.points){
-          //     year = bodyContent.points[i].year
-          //     cBelow = closestBelow(year, years)
-          //     bBelow = bands[years.indexOf(cBelow)]
-          //     cAbove = closestAbove(year, years)
-          //     bAbove = bands[years.indexOf(cAbove)]
-          //     pt = bodyContent.points[ptIdx]
-          //     param = [pt.longitude, pt.latitude, bBelow, bAbove, cBelow, cAbove , year, tableName]
-          //     request = t.oneOrNone(rasterQuery, param)
-          //     requests.push(request)
-          //   }
-          //   //use a transaction to do a batch
-          //   return t.batch(requests)
-          // }).then(function(rasterdata){
-          //   res.json(rasterdata)
-          //   // outPoints = []
-          //   // for (i in rasterdata){
-          //   //   try{
-          //   //     pt = {}
-          //   //     year = bodyContent.points[i].year
-          //   //     valAbove = rasterdata[i]['aboveval']
-          //   //     valBelow = rasterdata[i]['belowval']
-          //   //     closestYearAbove = Math.round(year/1000)*1000
-          //   //     closestYearBelow = closestYearAbove - 1000
-          //   //     interpValue = linear(year, [closestYearBelow, closestYearAbove], [valBelow, valAbove ])[0]
-          //   //     pt['latitude'] = bodyContent.points[i].latitude
-          //   //     pt['longitude'] = bodyContent.points[i].longitude
-          //   //     pt['value'] = interpValue
-          //   //     pt['year'] = year
-          //   //     outPoints.push(pt)
-          //   //   }catch(err){
-          //   //     outPoints.push({ 'latitude' : bodyContent.points[i].latitude,
-          //   //                     'longitude': bodyContent.points[i].longitude,
-          //   //                     'value' : -9999,
-          //   //                     'year':  year})
-          //   //   }
-          //   //
-          //   // }
-          //   // out = {
-          //   //   "success": true,
-          //   //   "timestamp" : new Date().toJSON(),
-          //   //   "variableID" : variableID,
-          //   //   "sourceID" : sourceID,
-          //   //   "data" : outPoints
-          //   // }
-          //   // res.json(out)
-          }).catch(function(err){
-            console.log(err)
-            res.json(err)
-          })
-        }).catch(function(err){
-          console.log(err)
-          res.json(err)
-        })
-      }).catch(function(err){
+  //insert the values into the data table
+  callid = uuid.v1();
+  insertPoints = []
+  for (var i =0; i < bodyContent.points.length; i++){
+    pt = bodyContent.points[i]
+    pt['yearabove'] = closestAbove(pt['year'], global.years)
+    pt['yearbelow'] = closestBelow(pt['year'], global.years)
+    pt['bandabove'] = global.bands[global.years.indexOf(pt['yearabove'])]
+    pt['bandbelow'] = global.bands[global.years.indexOf(pt['yearbelow'])]
+    pt['geom'] = 'ST_SetSRID(ST_MakePoint(' + pt['longitude'] + ',' + pt['latitude'] +'), 4326)'
+    pt['callid'] = callid
+    pt['ptrequestid'] = 'default'
+    pt['yr'] = pt['year']
+    pt['id'] = pt['id']
+    if (pt['id'] == undefined){
+      pt['id'] = null
+    }
+    insertPoints.push(pt)
+  }
+  // performance-optimized, reusable set of columns:
+  var cs = new pgp.helpers.ColumnSet(['ptrequestid', 'yr',
+        'bandabove', 'bandbelow', 'yearabove',
+        'yearbelow', 'geom', 'callid', 'id'], {table: 'pointrequests'});
+  //
+  // // generating a multi-row insert query:
+  var query = pgp.helpers.insert(insertPoints, cs);
+  // // // executing the query:
+  query = query.replaceAll("'", "")
+  query = query.replaceAll(callid, "'" + callid + "'")
+  db.none(query)
+      .then(function(data){
+        //sql to get the name of the table to go to
+        var query1 = "SELECT * from rasterindex \
+          where 1=1 AND \
+          variableid = $(variableID) AND sourceid = $(sourceID);"
+        //query for the table
+        db.oneOrNone(query1, {"variableID": variableID, "sourceID":sourceID})
+            .then(function(tabledata){
+                //get the value for every point in the Request
+                //first assemble all of the requests
+                tableName = tabledata['tableName']
+                rasterQuery = "SELECT(\
+                    	belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yr - yearBelow)) as value,\
+                      yr, id \
+                        FROM (\
+                    SELECT\
+                    	ST_Value(rast, bandBelow, pt) as belowVal,\
+                    	ST_Value(rast, bandAbove, pt) as aboveVal,\
+                    	yearBelow, yearAbove,\
+                    	yr, \
+                      id \
+                    FROM\
+                    $1:value,\
+                    	(select p.geom as pt, \
+                    	p.yearBelow as yearBelow, \
+                    	p.yearAbove as yearAbove, \
+                    	p.bandBelow as bandBelow, \
+                    	p.bandAbove as bandAbove,\
+                    	p.yr as yr, \
+                      p.id as id \
+                    	from pointrequests as p WHERE callID = $2) as makePoint\
+                    WHERE ST_Intersects(rast, pt)) as vals;"
+                db.any(rasterQuery, [tableName, callid])
+                  .then(function(data){
+                    res.json(data)
+                    deleteQuery = "DELETE FROM pointrequests WHERE callid=$1;"
+                    db.none(deleteQuery, [callid])
+                      .then(function(data){
+                        console.log("Done.")
+                      })
+                      .catch(function(err){
+                        console.log(err)
+                      })
+                  })
+                  .catch(function(err){
+                    res.json(err)
+                    console.log(err)
+                  })
+            }).catch(function(err){
+              console.log(err)
+              res.json(err)
+            })
+      })
+      .catch(function(err){
         console.log(err)
-        res.json(err)
       })
 }
 
@@ -210,6 +198,11 @@ function closestAbove(closestTo, arr){
     }
     return closest; // return the value
 }
+
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
 
 
 module.exports = {
