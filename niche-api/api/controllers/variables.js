@@ -1,8 +1,11 @@
-'use strict';
-var util = require('util');
+//this is Variables.js
+//GET information about the variables in the database
+// v2.0
 
 function getVariables(req, res) {
-  // variables defined in the Swagger document can be referenced using req.swagger.params.{parameter_name}
+  //GET a list of all variables that currently have data associated with them in the database
+
+  //get query parameters
   var variableType = req.swagger.params.variableType.value || null
   var variablePeriod = req.swagger.params.variablePeriod.value || null
   var variablePeriodType = req.swagger.params.variablePeriodType.value || null
@@ -11,9 +14,11 @@ function getVariables(req, res) {
   var variableUnits = req.swagger.params.variableUnits.value  || null
   var variableID = req.swagger.params.variableID.value  || null
 
-  console.log(variableType)
-
+  //create connection to database
   var db = global.createConnection()
+
+  //get details about the variables in the database
+  // only select variables for which there is at least one raster dataset
   var query = "select distinct variableDescription, variablePeriod, variableTypes.variabletype,\
         variableTypes.variabletypeabbreviation, \
         variablePeriodTypes.variablePeriodType, variableUnits.variableUnit, \
@@ -35,6 +40,7 @@ function getVariables(req, res) {
       ORDER BY rasterindex.variableID asc ;"
 
 
+  //query data from API call
   var queryVals = {'variableType': variableType,
                     'variablePeriod' : variablePeriod,
                     'variablePeriodType':variablePeriodType,
@@ -43,10 +49,10 @@ function getVariables(req, res) {
                     'variableUnits' : variableUnits,
                     'variableID': variableID
                   }
-console.log(queryVals)
-
+  //execute SQL
   db.any(query, queryVals)
     .then(function(data){
+      //return response to user
       var ts = new Date().toJSON()
       console.log("Success")
       var resOut = {
@@ -56,6 +62,7 @@ console.log(queryVals)
       }
       res.json(resOut)
     }).catch(function(err){
+      //error on SQL call 
       console.log(err)
       console.log("Fail")
       var resOut = {

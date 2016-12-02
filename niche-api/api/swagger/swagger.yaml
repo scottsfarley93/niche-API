@@ -117,7 +117,7 @@ paths:
         "200": 
           description: Success
           schema: 
-            $ref: "#/definitions/TimeSeriesResponse"
+            $ref: "#/definitions/GenericResponse"
         default:
           description: Error
           schema:
