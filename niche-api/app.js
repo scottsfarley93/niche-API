@@ -1,5 +1,14 @@
+//This is app.js
+//This is the main server controller for the niche api
+//uses express to route http requests
+//uses swagger to validate request/response syntax
+
+//v2.0
+
 'use strict';
 
+
+//load required modules
 var SwaggerExpress = require('swagger-express-mw');
 var app = require('express')();
 var pg = require("pg")
@@ -12,12 +21,13 @@ var pgp = require('pg-promise')( //postgres promise library makes it easier to e
   {promiseLib: promise}
 );
 
-app.use(cors())
-app.use(bodyParser({limit: '50mb'}));
-app.use(compression())
+
+app.use(cors()) //allowa allow cross-server responses
+app.use(bodyParser({limit: '50mb'})); //there are going to be some big requests
+app.use(compression()) //gzip all responses
 
 //set up logging
-function logCall (req, res, next) {
+function logCall (req, res, next) { //we could go to a db table
    console.log("-------" + new Date().toJSON() + "------")
    console.log(req.method)
    console.log(req.path)
@@ -25,12 +35,15 @@ function logCall (req, res, next) {
    next()
 }
 
-app.use(logCall)
+app.use(logCall) //log every call
 
 //read the configuration file with the connection details
 global.conf = JSON.parse(fs.readFileSync('conf.js', 'utf8'))
 
+
 global.createConnection =function(){
+  //connect to the ddatabase specified in the config file
+  //has to use VPN to SHC network
   var cn = {
       host: global.conf.host,
       port: global.conf.port,
@@ -44,7 +57,6 @@ global.createConnection =function(){
 }
 
 //get a list of the bands so we don't have to do it on every call
-
 var db = global.createConnection()
 var query2 = "SELECT * from bandindex;"
 db.any(query2)
@@ -58,6 +70,7 @@ db.any(query2)
   console.log("Got band info.")
 })
 .catch(function(err){
+  //errors getting band info
   console.log(err)
 })
 
@@ -74,6 +87,6 @@ SwaggerExpress.create(config, function(err, swaggerExpress) {
   // install middleware
   swaggerExpress.register(app);
 
-  var port = process.env.PORT || 10010;
+  var port = process.env.PORT || 10010; //run
   app.listen(port);
 });

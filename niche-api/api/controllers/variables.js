@@ -35,7 +35,7 @@ function getVariables(req, res) {
         AND (${variablePeriodType} IS NULL or variableTypes.variabletype = ${variablePeriodType}) \
         AND (${averagingPeriod} IS NULL or variableAveraging = ${averagingPeriod}) \
         AND (${averagingPeriodType} IS NULL or averagingPeriodTypes.averagingPeriodType = ${averagingPeriodType}) \
-        AND (${variableUnits} IS NULL or variableUnits.variableUnit = ${variableUnits}) \
+        AND (${variableUnits} IS NULL or variableUnits.variableUnitAbbreviation = ${variableUnits}) \
         AND (${variableID} IS NULL or rasterindex.variableID = ${variableID}) \
       ORDER BY rasterindex.variableID asc ;"
 
@@ -62,7 +62,7 @@ function getVariables(req, res) {
       }
       res.json(resOut)
     }).catch(function(err){
-      //error on SQL call 
+      //error on SQL call
       console.log(err)
       console.log("Fail")
       var resOut = {
