@@ -37,14 +37,16 @@ function getTimeseries(req, res) {
       //make a space-time geometry for each band
       for (i=0; i< global.bands.length; i++){
         p = global.bands[i]
-        r = "year" + global.years[i] //this is bad...
-        query2 += " ST_Value(rast, $" + p + ", ST_SetSRID(ST_MakePoint($1, $2), 4326)) as " + r + ", " //this specifies the band number of interest
-        query2Vars.push(i) //list of space-time points to query for
+        queryIdx = i + 3 //2 params already in list
+        r = "year" + global.years[i] + "BP" //this is bad...
+        query2 += " ST_Value(rast, $" + queryIdx + ", pt) as " + r + ", " //this specifies the band number of interest
+        query2Vars.push(p) //list of space-time points to query for
       }
       query2 = query2.slice(0, -2) //get rid of trailing comma
-      query2 += " FROM " + tablename + " " //this is bad...
-      query2 += " WHERE ST_Intersects(rast, ST_SetSRID(ST_MakePoint($1, $2), 4326));"
-      console.log(query2)
+      query2 += " FROM " + tablename + ", " //this is bad...
+      query2 += "	ST_SetSRID(ST_MakePoint($1, $2), 4326) as pt \
+          WHERE \
+          	ST_Intersects(rast, pt);"
       db.any(query2, query2Vars)
         .then(function(rastData){
           // //successfully got data

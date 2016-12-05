@@ -59,7 +59,7 @@
           console.log(dat)
           elapsed = time3 - time2
           $("#results").append("...Ready to send to data service.  Elapsed: " + elapsed + "ms<br / />")
-          dataserviceURI = "http://localhost:10010/data"
+          dataserviceURI = "http://localhost:8080/data"
           stringDat = JSON.stringify(dat)
           $.ajax(dataserviceURI, {
             type: "POST",
