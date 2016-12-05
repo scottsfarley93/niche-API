@@ -24,4 +24,54 @@ Gridded climate model output is great if you want to examine the spatial pattern
 - [Ice Age Mapper](http://paleo.geography.wisc.edu)
 
 ### Example Calls
-e
+
+***Get a list of all climate variables in the database***: 
+
+[http://localhost:8080/variables?](http://localhost:8080/variables?)
+
+***Get a list of all the data sources in the database***:
+
+[http://localhost:8080/sources?](http://localhost:8080/sources?)
+
+***Get a 22,000 year time series of January temperatures from Berkeley, CA (37.88N, -122.26W)***:
+
+[http://localhost:8080/timeseries?latitude=37.88&longitude=-122.6&sourceID=6&variableID=40](http://localhost:8080/timeseries?latitude=37.88&longitude=-122.6&sourceID=6&variableID=40)
+
+***Get the summer (July) maximum temperature in New York City (40.71N, 74.01W) 15,200 years ago:***
+
+[http://localhost:8080/data?latitude=40.71&longitude=-74.01&sourceID=6&variableID=34&yearsBP=15200](http://localhost:8080/data?latitude=40.71&longitude=-74.01&sourceID=6&variableID=34&yearsBP=15200)
+
+***Get the summer (July) maximum temperature in the following locations:***
+
+| Latitude | Longitude | Years BP| 
+| -------- | --------- | ------- |
+|42.12 | -90.74 | 964 |
+| 50.3 | -121.34 | 11230 |
+| 60.92 | -118.56 | 19290 |
+
+<pre>
+curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: 17e29cb4-9d8e-f8a8-4073-70075e851f9c" -d '{	"variableID": 34,
+	"sourceID": 6,
+	"points": [
+		{
+			"latitude": 42.12,
+			"longitude": -90.74,
+			"year": 964
+		}, 
+		{
+			"latitude": 50.3,
+			"longitude":-121.34,
+			"year": 11230
+		},
+		{
+			"latitude": 60.92,
+			"longitude": -118.56,
+			"year":19290
+		}
+	]
+}' "http://localhost:8080/data"
+</pre>
+
+### Documentation
+To see all the docs, go [here](http://grad.geography.wisc.edu/cds)
+
