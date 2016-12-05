@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <script
+  src="https://code.jquery.com/jquery-3.1.1.js"
+  integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+  crossorigin="anonymous"></script>
+
+
+  <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<style>
+.page-header{
+  padding-left: 1%;
+}
+h3{
+  padding-left: 1%;
+}
+.row{
+  padding-left: 2.5%;
+}
+tr:nth-child(even) {background-color: #f2f2f2}
+table{
+  width: 100%;
+  padding-top: 5%;
+  padding-bottom: 5%;
+}
+</style>
+</head>
+<body>
+<h1 id="niche-api" class='page-header'>Niche API</h1>
+<h3 id="scott-farley" class='text-muted'>Scott Farley</h3>
+<h3 id="uw-madison" class='text-muted'>UW Madison</h3>
+<div class='row'>
+<h3 class='page-header'>Objective</h3>
+<p>Creates a web-based data service that serves global climate model data at a specific point in space and time for a given set of climate variables.</p>
+<p>Gridded climate model output is great if you want to examine the spatial patterns of climate in a single time slice, but is difficult to use if you want to track the trajectory of a specific point in space (x, y) in climate space through time. I know of no way to programmatically and efficiently get the value of climatic variables (maximum temperature, minimum temperature, precipitation, etc) at a single grid cell at a time slice using standard web-based repositories. My goal is to create a data service that allows a client to query a space-time point (e.g., 37N, -122W, 1250 years ago) for a specific climate layer and return the information in a consumable format (json). I’d like whatever I build to be web-based, and have the heavy lifting done on the server side, so that the user doesn’t need to download the whole data file (e.g., netcdf) which would be a lot of data transfer and probably contain a lot of unnecessary information. I’d also like to build out a REST interface so that the querying can be efficiently done by any client. The service would serve downscaled CCSM3 climate model output for North America between 22,000 years ago and the present, as well as, potentially, other climate models and/or other gridded datasets (soils, land use) though both of these seem like they’d be much more complicated.</p>
+<h3 id="technical-configuration" class='page-header'>Technical Configuration</h3>
+<p><strong><em>Database:</em></strong> Run a Postgres database with PostGIS spatial extensions. Store each time slice (e.g, 22000 years ago, 21900 years ago, 21800 years ago…) for each variable (e.g., January precipitation, January maximum temperature,…) as a separate postgres raster table table. Store a pointer to that table in a central index table that keeps track of the layer’s metdata. When a client issues a query, search the index table to find the row(s) that meet the user’s query. Go to the raster tables that are referred by each of these rows and do a point-in-raster value extraction. Send back the values at those points in those tables.</p>
+<p><strong><em>Server/Service:</em></strong> Run a Node.js server interface. Using the Express.js and Postgres (pg) bindings for node, parse client requests and send them to the database. When the database responds, package up the json and send the response back to the client.</p>
+<h3 id="libraries">Libraries:</h3>
+<ul>
+<li><code>PostGIS</code>: Management of raster spatial data, handles geometry conversion on incoming calls</li>
+<li><code>Swagger (swagger-express-mw)</code>: Ensures proper API returns by validating against a schema. Documents the API.</li>
+<li><code>pg-promise</code>: Simplified connection to postgres database.</li>
+<li><code>express</code>: Web framework for Node.js</li>
+<li><code>uuid</code>: Node library for generating universally unique identifiers. Used to assign IDs to client requests.</li>
+<li><code>cors</code>: Allow cross-origin requests from this server.</li>
+<li><code>compression</code>: Return all responses from the application as <code>gzip</code> compressed files.</li>
+</ul>
+<h3 id="projects-using-the-niche-api">Projects Using the Niche API:</h3>
+<ul>
+<li><a href="http://paleo.geography.wisc.edu">Ice Age Mapper</a></li>
+</ul>
+<h3 id="example-calls">Example Calls</h3>
+<p><strong><em>Get a list of all climate variables in the database</em></strong>:</p>
+<p><a href="http://grad.geography.wisc.edu:8080/variables?" class="uri">http://grad.geography.wisc.edu:8080/variables?</a></p>
+<p><strong><em>Get a list of all the data sources in the database</em></strong>:</p>
+<p><a href="http://grad.geography.wisc.edu:8080/sources?" class="uri">http://grad.geography.wisc.edu:8080/sources?</a></p>
+<p><strong><em>Get a 22,000 year time series of January temperatures from Berkeley, CA (37.88N, -122.26W)</em></strong>:</p>
+<p><a href="http://grad.geography.wisc.edu:8080/timeseries?latitude=37.88&amp;longitude=-122.6&amp;sourceID=6&amp;variableID=28" class="uri">http://grad.geography.wisc.edu:8080/timeseries?latitude=37.88&amp;longitude=-122.6&amp;sourceID=6&amp;variableID=28</a></p>
+<p><strong><em>Get the summer (July) maximum temperature in New York City (40.71N, 74.01W) 15,200 years ago:</em></strong></p>
+<p><a href="http://grad.geography.wisc.edu:8080/data?latitude=40.71&amp;longitude=-74.01&amp;sourceID=6&amp;variableID=28&amp;yearsBP=15200" class="uri">http://grad.geography.wisc.edu:8080/data?latitude=40.71&amp;longitude=-74.01&amp;sourceID=6&amp;variableID=28&amp;yearsBP=15200</a></p>
+<p><strong><em>Get the summer (July) maximum temperature in the following locations:</em></strong></p>
+<table>
+<thead>
+<tr class="header">
+<th>Latitude</th>
+<th>Longitude</th>
+<th>Years BP</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>42.12</td>
+<td>-90.74</td>
+<td>964</td>
+</tr>
+<tr class="even">
+<td>50.3</td>
+<td>-121.34</td>
+<td>11230</td>
+</tr>
+<tr class="odd">
+<td>60.92</td>
+<td>-118.56</td>
+<td>19290</td>
+</tr>
+</tbody>
+</table>
+<p>Multiple points are requested using a POST request. Here’s a cURL command to issue such a request.</p>
+<pre>
+curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: 4cd7aa0d-3650-fe96-d822-8c4d1a321553" -d '{    "variableID": 34,
+    "sourceID": 6,
+    "points": [
+        {
+            "latitude": 42.12,
+            "longitude": -90.74,
+            "year": 964
+        },
+        {
+            "latitude": 50.3,
+            "longitude":-121.34,
+            "year": 11230
+        },
+        {
+            "latitude": 60.92,
+            "longitude": -118.56,
+            "year":19290
+        }
+    ]
+}' "http://grad.geography.wisc.edu:8080/data"
+</pre>
+<h3 id="documentation">Documentation</h3>
+<p>To see all the docs, go <a href="http://grad.geography.wisc.edu/cds">here</a>.</p>
+</div>
+</body>
+</html>
