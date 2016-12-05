@@ -49,6 +49,8 @@ Gridded climate model output is great if you want to examine the spatial pattern
 | 50.3 | -121.34 | 11230 |
 | 60.92 | -118.56 | 19290 |
 
+Multiple points are requested using a POST request.  Here's a cURL command to issue such a request.
+
 <pre>
 curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: 17e29cb4-9d8e-f8a8-4073-70075e851f9c" -d '{	"variableID": 34,
 	"sourceID": 6,
@@ -73,5 +75,5 @@ curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H
 </pre>
 
 ### Documentation
-To see all the docs, go [here](http://grad.geography.wisc.edu/cds)
+To see all the docs, go [here](http://grad.geography.wisc.edu/cds).
 
