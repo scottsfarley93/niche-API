@@ -27,19 +27,19 @@ Gridded climate model output is great if you want to examine the spatial pattern
 
 ***Get a list of all climate variables in the database***: 
 
-[http://localhost:8080/variables?](http://localhost:8080/variables?)
+[http://grad.geography.wisc.edu:8080/variables?](http://grad.geography.wisc.edu:8080/variables?)
 
 ***Get a list of all the data sources in the database***:
 
-[http://localhost:8080/sources?](http://localhost:8080/sources?)
+[http://grad.geography.wisc.edu:8080/sources?](http://grad.geography.wisc.edu:8080/sources?)
 
 ***Get a 22,000 year time series of January temperatures from Berkeley, CA (37.88N, -122.26W)***:
 
-[http://localhost:8080/timeseries?latitude=37.88&longitude=-122.6&sourceID=6&variableID=40](http://localhost:8080/timeseries?latitude=37.88&longitude=-122.6&sourceID=6&variableID=40)
+[http://grad.geography.wisc.edu:8080/timeseries?latitude=37.88&longitude=-122.6&sourceID=6&variableID=28](http://grad.geography.wisc.edu:8080/timeseries?latitude=37.88&longitude=-122.6&sourceID=6&variableID=28)
 
 ***Get the summer (July) maximum temperature in New York City (40.71N, 74.01W) 15,200 years ago:***
 
-[http://localhost:8080/data?latitude=40.71&longitude=-74.01&sourceID=6&variableID=34&yearsBP=15200](http://localhost:8080/data?latitude=40.71&longitude=-74.01&sourceID=6&variableID=34&yearsBP=15200)
+[http://grad.geography.wisc.edu:8080/data?latitude=40.71&longitude=-74.01&sourceID=6&variableID=28&yearsBP=15200](http://grad.geography.wisc.edu:8080/data?latitude=40.71&longitude=-74.01&sourceID=6&variableID=28&yearsBP=15200)
 
 ***Get the summer (July) maximum temperature in the following locations:***
 
@@ -52,7 +52,7 @@ Gridded climate model output is great if you want to examine the spatial pattern
 Multiple points are requested using a POST request.  Here's a cURL command to issue such a request.
 
 <pre>
-curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: 17e29cb4-9d8e-f8a8-4073-70075e851f9c" -d '{	"variableID": 34,
+curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: 4cd7aa0d-3650-fe96-d822-8c4d1a321553" -d '{	"variableID": 34,
 	"sourceID": 6,
 	"points": [
 		{
@@ -71,7 +71,7 @@ curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H
 			"year":19290
 		}
 	]
-}' "http://localhost:8080/data"
+}' "http://grad.geography.wisc.edu:8080/data"
 </pre>
 
 ### Documentation
