@@ -33,24 +33,26 @@
     position: absolute;
     top: 5%;
     left: 1%;
-    height: 10%;
-    width: 40%;
     z-index: 1000;
   }
-
-  .axis--x path {
-  display: none;
-}
+  .axis path,
+  .axis line {
+  fill: none;
+  stroke: grey;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+  }
 /*.axis--y path {
   display: none;
 }*/
+.axis text {
+    fill: white;
+}
   </style>
 </head>
 <body>
   <div id='controls'>
     <select id='variable-selection'></select>
-
-
   </div>
   <div id='map' class='row'>
 
@@ -101,7 +103,7 @@
 
 
 
-      x = d3.scaleLinear().range([0, width]).domain([0, 22000]),
+      x = d3.scaleLinear().range([width, 0]).domain([0, 22000]),
       y = d3.scaleLinear().range([height, 0]),
 
 
@@ -161,21 +163,16 @@ function drawTimeseries(data){
   g.append("g")
       .attr("class", "axis axis--x")
       .attr("transform", "translate(0," + height + ")")
-      .style('stroke', 'white')
-      .style('fill', 'white')
       .call(d3.axisBottom(x));
 
   g.append("g")
      .attr("class", "axis axis--y")
      .call(d3.axisLeft(y))
-     .style('stroke', 'white')
-    //  .style('fill', 'white')
      .style('stroke-width', 0.5)
    .append("text")
      .attr("transform", "rotate(-90)")
      .attr("y", 6)
      .attr("dy", "0.71em")
-     .attr("fill", "white")
      .text("Temperature, ºC");
 
   ts = g.selectAll(".ts")

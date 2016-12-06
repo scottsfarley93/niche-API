@@ -2,9 +2,29 @@
 ### Scott Farley
 ### UW Madison
 
+<style>
+#demo{
+  width: 100%;
+  height: 100%;
+}
+#demo-row{
+  height: 700px!important;
+  padding-right: 10%;
+  padding-left: 10%;
+}
+</style>
+
 Creates a web-based data service that serves global climate model data at a specific point in space and time for a given set of climate variables.  
 
 Gridded climate model output is great if you want to examine the spatial patterns of climate in a single time slice, but is difficult to use if you want to track the trajectory of a specific point in space (x, y) in climate space through time. I know of no way to programmatically and efficiently get the value of climatic variables (maximum temperature, minimum temperature, precipitation, etc) at a single grid cell at a time slice using standard web-based repositories.  My goal is to create a data service that allows a client to query a space-time point (e.g., 37N, -122W, 1250 years ago) for a specific climate layer and return the information in a consumable format (json).  I’d like whatever I build to be web-based, and have the heavy lifting done on the server side, so that the user doesn’t need to download the whole data file (e.g., netcdf) which would be a lot of data transfer and probably contain a lot of unnecessary information.  I’d also like to build out a REST interface so that the querying can be efficiently done by any client. The service would serve downscaled CCSM3 climate model output for North America between 22,000 years ago and the present, as well as, potentially, other climate models and/or other gridded datasets (soils, land use) though both of these seem like they’d be much more complicated.  
+
+<h3 class='page-header'>Working Demo</h3>
+<p>
+  Click a point on the map to get a 22,000 year time series of temperature for that place on earth.
+</p>
+<div class='row' id='demo-row'>
+  <iframe src="http://grad.geography.wisc.edu/cds/map.html" id='demo'></iframe>
+</div>
 
 ### Technical Configuration
 ***Database:*** Run a Postgres database with PostGIS spatial extensions. Store each time slice (e.g, 22000 years ago, 21900 years ago, 21800 years ago…) for each variable (e.g., January precipitation, January maximum temperature,…) as a separate postgres raster table table.  Store a pointer to that table in a central index table that keeps track of the layer’s metdata. When a client issues a query, search the index table to find the row(s) that meet the user’s query.  Go to the raster tables that are referred by each of these rows and do a point-in-raster value extraction. Send back the values at those points in those tables.
@@ -25,7 +45,7 @@ Gridded climate model output is great if you want to examine the spatial pattern
 
 ### Example Calls
 
-***Get a list of all climate variables in the database***: 
+***Get a list of all climate variables in the database***:
 
 [http://grad.geography.wisc.edu:8080/variables?](http://grad.geography.wisc.edu:8080/variables?)
 
@@ -43,7 +63,7 @@ Gridded climate model output is great if you want to examine the spatial pattern
 
 ***Get the summer (July) maximum temperature in the following locations:***
 
-| Latitude | Longitude | Years BP| 
+| Latitude | Longitude | Years BP|
 | -------- | --------- | ------- |
 |42.12 | -90.74 | 964 |
 | 50.3 | -121.34 | 11230 |
@@ -59,7 +79,7 @@ curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H
 			"latitude": 42.12,
 			"longitude": -90.74,
 			"year": 964
-		}, 
+		},
 		{
 			"latitude": 50.3,
 			"longitude":-121.34,
@@ -76,4 +96,3 @@ curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H
 
 ### Documentation
 To see all the docs, go [here](http://grad.geography.wisc.edu/cds).
-

@@ -36,12 +36,28 @@ table{
   padding-top: 5%;
   padding-bottom: 5%;
 }
+#demo{
+  width: 100%;
+  height: 100%;
+}
+#demo-row{
+  height: 700px!important;
+  padding-right: 10%;
+  padding-left: 10%;
+}
 </style>
 </head>
 <body>
 <h1 id="niche-api" class='page-header'>Niche API</h1>
 <h3 id="scott-farley" class='text-muted'>Scott Farley</h3>
 <h3 id="uw-madison" class='text-muted'>UW Madison</h3>
+<h3 class='page-header'>Working Demo</h3>
+<p>
+  Click a point on the map to get a 22,000 year time series of temperature for that place on earth.
+</p>
+<div class='row' id='demo-row'>
+  <iframe src="http://grad.geography.wisc.edu/cds/map.html" id='demo'></iframe>
+</div>
 <div class='row'>
 <h3 class='page-header'>Objective</h3>
 <p>Creates a web-based data service that serves global climate model data at a specific point in space and time for a given set of climate variables.</p>
