@@ -1,0 +1,195 @@
+<html>
+<head>
+  <title>Point and Click</title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+  <script
+    src="https://code.jquery.com/jquery-3.1.1.min.js"
+    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+    crossorigin="anonymous"></script>
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <style>
+  #map{
+    height: 70%
+  }
+  #timeseries{
+    height: 30%;
+    background-color: black;
+  }
+  body, html{
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  #controls{
+    position: absolute;
+    top: 5%;
+    left: 1%;
+    height: 10%;
+    width: 40%;
+    z-index: 1000;
+  }
+
+  .axis--x path {
+  display: none;
+}
+/*.axis--y path {
+  display: none;
+}*/
+  </style>
+</head>
+<body>
+  <div id='controls'>
+    <select id='variable-selection'></select>
+
+
+  </div>
+  <div id='map' class='row'>
+
+  </div>
+  <div id='timeseries' class='row'>
+
+  </div>
+  <script>
+  globals = {}
+  globals.variable = 28
+  globals.source = 6
+
+  $.ajax("http://grad.geography.wisc.edu:8080/variables", {
+    success:function(data){
+      vars = data.data
+      console.log(vars)
+      for (i in vars){
+        $("#variable-selection").append("<option data-varid='" + vars[i]['variableid'] + "'>" + vars[i]['variabledescription'] + "</option>")
+      }
+      $("#variable-selection").change(function(){
+        globals.variable = $('#variable-selection :selected').data('varid');
+        console.log(globals.variable)
+      })
+    },
+    error: function(xhr){
+      console.log(xhr.responseText)
+    },
+    beforeSend: function(){
+      console.log(this.url)
+    }
+  })
+
+  $(document).ready(function(){
+    var map = L.map('map', { zoomControl:false }).setView([40, -90], 3);
+    var popup = L.popup();
+    L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var svg = d3.select("#timeseries").append("svg")
+      .attr('height',$("#timeseries").height())
+      .attr('width', $("body").width())
+
+    margin = {top: 20, right: 10, bottom: 30, left: 50},
+    width = $("body").width() - margin.left - margin.right,
+    height = $("#timeseries").height() - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+      x = d3.scaleLinear().range([0, width]).domain([0, 22000]),
+      y = d3.scaleLinear().range([height, 0]),
+
+
+    line = d3.line()
+    .curve(d3.curveBasis)
+    .x(function(d) { return x(d.year); })
+    .y(function(d) { return y(d.value); });
+
+
+    map.on('click', function(e) {
+      lat = e.latlng.lat
+      lng = e.latlng.lng
+      getClimateData(lat, lng, globals.variable, drawTimeseries)
+
+      popup
+        .setLatLng(e.latlng)
+        .setContent("Latitude: " + e.latlng.lat + "N <br /> Longitude: " + e.latlng.lng + "W")
+        .openOn(map);
+
+  });
+
+}) //end document ready
+
+function getClimateData(lat, lng, variable, callback){
+  host = "http://grad.geography.wisc.edu:8080/timeseries?"
+  host += "latitude=" + lat + "&longitude=" + lng + "&variableID="+variable + "&sourceID=6"
+  $.ajax(host, {
+    success: function(data){
+      globals.timeseriesData = data.data[0]
+      drawTimeseries(globals.timeseriesData)
+    },
+    error: function(xhr, status, error){
+      console.log(xhr.responseText)
+    },
+    beforeSend: function(){
+      console.log(this.url)
+    }
+  })
+}
+
+function drawTimeseries(data){
+  g.selectAll("*").remove();
+  arr = []
+  for (i in data){
+    key = i.replace("year", "")
+    key = key.replace("bp", "")
+    key = +key
+    value = data[i]
+    arr.push({'value': value, 'year':key})
+  }
+
+  y.domain([
+    d3.min(arr, function(d) { return d.value}),
+    d3.max(arr, function(d) { return d.value})
+  ])
+
+  g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .style('stroke', 'white')
+      .style('fill', 'white')
+      .call(d3.axisBottom(x));
+
+  g.append("g")
+     .attr("class", "axis axis--y")
+     .call(d3.axisLeft(y))
+     .style('stroke', 'white')
+    //  .style('fill', 'white')
+     .style('stroke-width', 0.5)
+   .append("text")
+     .attr("transform", "rotate(-90)")
+     .attr("y", 6)
+     .attr("dy", "0.71em")
+     .attr("fill", "white")
+     .text("Temperature, ºC");
+
+  ts = g.selectAll(".ts")
+     .data(arr)
+     .enter().append("g")
+       .attr("class", "ts");
+ ts.append("path")
+     .attr("class", "line")
+     .attr("d", function(d) { return line(arr); })
+     .style("stroke", 'red')
+     .style('fill', 'none')
+     .style("stroke-width", 2)
+}
+
+  </script>
+
+</body>
