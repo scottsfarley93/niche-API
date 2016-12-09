@@ -22,6 +22,7 @@ Gridded climate model output is great if you want to examine the spatial pattern
 <p>
   Click a point on the map to get a 22,000 year time series of temperature for that place on earth.
 </p>
+<a href="http://grad.geography.wisc.edu/cds/map.html">Here</a>
 <div class='row' id='demo-row'>
   <iframe src="http://grad.geography.wisc.edu/cds/map.html" id='demo'></iframe>
 </div>
