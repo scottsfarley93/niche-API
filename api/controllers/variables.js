@@ -27,7 +27,7 @@ function getVariables(req, res) {
       inner join variables on variables.variableid = rasterindex.variableid \
       inner join variableTypes on variables.variableType = variableTypes.variableTypeID \
       inner join variableUnits on variables.variableUnits = variableUnits.variableUnitID \
-      inner join variablePeriodTypes on variables.variablePeriod = variablePeriodTypes.variablePeriodTypeID \
+      inner join variablePeriodTypes on variables.variablePeriodType = variablePeriodTypes.variablePeriodTypeID \
       inner join averagingPeriodTypes on variables.variableAveragingType = averagingPeriodTypes.averagingPeriodTypeID \
       WHERE 1=1 \
         AND (${variableType} IS NULL or variableTypes.variabletypeid = ${variableType}) \

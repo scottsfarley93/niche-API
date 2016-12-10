@@ -31,8 +31,18 @@ function logCall (req, res, next) { //we could go to a db table
    console.log("-------" + new Date().toJSON() + "------")
    console.log(req.method)
    console.log(req.path)
+   var db = global.createConnection()
+   var sql = "INSERT INTO calllog VALUES(DEFAULT, DEFAULT, ${method}, ${path}, ${params}, ${ip})"
+   var vals = {method: req.method, path: req.path, params: req.params, ip: req.ip}
+   db.none(sql, vals)
+    .then(function(data){
+      next()
+    })
+    .catch(function(err){
+      console.log(err)
+      next()
+    })
 
-   next()
 }
 
 app.use(logCall) //log every call
