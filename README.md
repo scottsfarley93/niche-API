@@ -83,5 +83,8 @@ curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H
 }' "http://grad.geography.wisc.edu:8080/data"
 </pre>
 
+### Project Homepage
+To see the project homepage and any recent updates, go [here](http://grad.geography.wisc.edu/cds). 
+
 ### Documentation
-To see all the docs, go [here](http://grad.geography.wisc.edu/cds).
+To see all the docs, go [here](http://grad.geography.wisc.edu/cds/docs).
