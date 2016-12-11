@@ -306,7 +306,47 @@ paths:
         default:
           description: Error
           schema:
-            $ref: "#/definitions/ErrorResponse"               
+            $ref: "#/definitions/ErrorResponse"   
+            
+  /transect:
+    x-swagger-router-controller: transect
+    get:
+      description: Get environmental data along a user-specified geometry at native raster resolution.
+      operationId: getTransect
+      parameters:
+        - name: variableID
+          required: false
+          type: number
+          description: Database ID of the variable of interest.
+          in: query
+          
+        - name: sourceID
+          required: false
+          type: number
+          description: Database of the data source.
+          in: query
+          
+        - name: yearsBP
+          required: false
+          type: number
+          description: Years before present of interest.
+          in: query
+          
+        - name: geometry
+          required: false
+          type: string
+          description: WKT geometry along which to get environmental data. If a multi-point, returns data at at those points. If line, returns environmental data along the transect.  If polygon, returns the values of all the cells falling within the polygon.
+          in: query
+        
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GenericResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"  
         
         
 # complex objects have schema definitions
