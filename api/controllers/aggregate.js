@@ -42,7 +42,7 @@ function getAverage(req, res) {
            FROM $1:value as dat, g\
            WHERE ST_Intersects(dat.rast, g.geom)\
          )\
-      	SELECT avg(val) \
+      	SELECT avg(val), count(val) \
       	     FROM cells, g\
       	     GROUP BY g.geom"
 
