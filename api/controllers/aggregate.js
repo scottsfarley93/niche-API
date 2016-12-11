@@ -1,5 +1,5 @@
-//This is transect.js
-//Enables data GET requests for data along a user-specified geometry at database native raster resolution
+//This is aggregate.js
+//Enables data GET requests to aggregate (average) data over a user-specified geometry.
 //v2.0
 
 //load libraries
@@ -10,7 +10,7 @@ var pgp = require('pg-promise')( //postgres promise library makes it easier to e
   {promiseLib: promise}
 );
 
-function getTransect(req, res) {
+function getAverage(req, res) {
   //GET data for a user specified geometry with given variable and source ids at a single point in time.
 
   // Get query parametersl
@@ -34,19 +34,17 @@ function getTransect(req, res) {
           tableName = tabledata['tableName']
 
           var queryGeom = "SRID=4326;" + userGeom //set the coordinate system
-
-
-          rasterQuery = " WITH line AS\
+          rasterQuery = " WITH g AS\
           (SELECT $3::geometry AS geom),\
-        cells AS \
-          (SELECT ST_Centroid((ST_Intersection(dat.rast, line.geom)).geom) AS geom,\
-          (ST_Intersection(dat.rast, $2, line.geom)).val AS val \
-           FROM $1:value as dat, line \
-           WHERE ST_Intersects(dat.rast, line.geom) \
-         ) \
-      	SELECT ST_X(cells.geom) as X, ST_Y(cells.geom) as Y, val  \
-      	     FROM cells, line \
-      	     ORDER BY ST_Distance(ST_StartPoint(line.geom), cells.geom)"
+        cells AS\
+          (SELECT ST_Centroid((ST_Intersection(dat.rast, g.geom)).geom) AS geom,\
+          (ST_Intersection(dat.rast, $2, g.geom)).val AS val\
+           FROM $1:value as dat, g\
+           WHERE ST_Intersects(dat.rast, g.geom)\
+         )\
+      	SELECT avg(val) \
+      	     FROM cells, g\
+      	     GROUP BY g.geom"
 
           //facilitates linear interpolation in the query
               yearabove = closestAbove(yearBP, global.years) //closest year above the yearBP value
@@ -107,5 +105,5 @@ String.prototype.replaceAll = function(search, replacement) {
 
 
 module.exports = {
-  getTransect: getTransect
+  getAverage: getAverage
 };
