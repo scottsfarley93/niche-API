@@ -18,7 +18,7 @@ function getDataPoint(req, res) {
   var longitude = req.swagger.params.longitude.value || null
   var variableID = req.swagger.params.variableID.value || null
   var sourceID = req.swagger.params.sourceID.value || null
-  var yearBP = req.swagger.params.yearsBP.value || null
+  var yearBP = req.swagger.params.yearsBP.value || 0
 
   // connect to database
   var db = global.createConnection()
@@ -26,11 +26,12 @@ function getDataPoint(req, res) {
   //ask the database which raster table we should query
   var query1 = "SELECT * from rasterindex \
     where 1=1 AND \
-    variableid = $(variableID) AND sourceid = $(sourceID);"
+    variableid = $(variableID) AND sourceid = $(sourceID) LIMIT 1;"
 
   //execute query for table
   db.oneOrNone(query1, {"variableID": variableID, "sourceID":sourceID})
       .then(function(tabledata){
+        console.log(tabledata)
         //successful execution of first query
           tableName = tabledata['tableName']
           // query the database for interpolated values at the specific space-time location
@@ -54,14 +55,19 @@ function getDataPoint(req, res) {
 		      ST_Intersects(rast, pt)\
 		  ) as vals;"
 
+      console.log(rasterQuery)
+
+
           //facilitates linear interpolation in the query
               yearabove = closestAbove(yearBP, global.years) //closest year above the yearBP value
               yearbelow = closestBelow(yearBP, global.years) //closest year below the yearBP value
               bandabove = global.bands[global.years.indexOf(yearabove)] //corresponding band number for yearAbove
               bandbelow = global.bands[global.years.indexOf(yearbelow)] //coresponding band number for yearBelow
-          //execute query for values
+
+              console.log([tableName, longitude, latitude, yearBP, bandbelow, bandabove, yearabove, yearbelow])
           db.any(rasterQuery, [tableName, longitude, latitude, yearBP, bandbelow, bandabove, yearabove, yearbelow])
             .then(function(data){
+              console.log(data)
               //return generic response to user
               var ts = new Date().toJSON()
               console.log("Success")

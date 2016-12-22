@@ -180,7 +180,7 @@ display: none;
     });
 
     function getData(callback){
-      host = "http://localhost:8080/transect?variableID=" + globals.variable + "&sourceID=6&yearsBP=" + globals.yearsBP + "&geometry=" + geom
+      host = "http://grad.geography.wisc.edu:8080/transect?variableID=" + globals.variable + "&sourceID=6&yearsBP=" + globals.yearsBP + "&geometry=" + geom
 
       $.ajax(host, {
         success: function(data){

@@ -51,12 +51,19 @@ table{
 <h1 id="niche-api" class='page-header'>Niche API</h1>
 <h3 id="scott-farley" class='text-muted'>Scott Farley</h3>
 <h3 id="uw-madison" class='text-muted'>UW Madison</h3>
-<h3 class='page-header'>Working Demo</h3>
+<h3 class='page-header'>Timeseries Demo</h3>
 <p>
   Click a point on the map to get a 22,000 year time series of temperature for that place on earth.
 </p>
 <div class='row' id='demo-row'>
   <iframe src="http://grad.geography.wisc.edu/cds/map.html" id='demo'></iframe>
+</div>
+<h3 class='page-header'>Transect Demo</h3>
+<p>
+  Draw a line, get a transect of environmental data along it.
+</p>
+<div class='row' id='demo-row'>
+  <iframe src="http://grad.geography.wisc.edu/cds/draw.html" id='demo'></iframe>
 </div>
 <div class='row'>
 <h3 class='page-header'>Objective</h3>
@@ -138,6 +145,12 @@ curl -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H
     ]
 }' "http://grad.geography.wisc.edu:8080/data"
 </pre>
+
+<p><strong><em>Get the January minimum temperature along a transect through the Prairie-Forest ecotone:</em></strong></p>
+<p><a href="http://grad.geography.wisc.edu:8080/transect?geometry=LINESTRING(-99.84375%2040.526326510744006,-90.52734375%2048.177075627796114)&sourceID=6&variableID=28&yearsBP=0" class="uri">http://grad.geography.wisc.edu:8080/transect?geometry=LINESTRING(-99.84375%2040.526326510744006,-90.52734375%2048.177075627796114)&sourceID=6&variableID=28&yearsBP=0</a></p>
+<p><strong><em>Get the average summer maximum temperature within the state of Colorado 22,000 years BP:</em></strong></p>
+<p><a href="http://grad.geography.wisc.edu:8080/aggregate?geometry=POLYGON((-109.248046875%2041.08556197870255,-101.162109375%2041.08556197870255,-101.162109375%2036.8510544475565,-109.248046875%2036.8510544475565,-109.248046875%2041.08556197870255))&sourceID=6&variableID=28&yearsBP=0" class="uri">http://grad.geography.wisc.edu:8080/aggregate?geometry=POLYGON((-109.248046875%2041.08556197870255,-101.162109375%2041.08556197870255,-101.162109375%2036.8510544475565,-109.248046875%2036.8510544475565,-109.248046875%2041.08556197870255))&sourceID=6&variableID=28&yearsBP=0</a></p>
+
 <h3 id="documentation">Documentation</h3>
 <p>To see all the docs, go <a href="http://grad.geography.wisc.edu/cds/docs">here</a>.</p>
 </div>
