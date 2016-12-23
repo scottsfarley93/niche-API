@@ -1,0 +1,207 @@
+<html>
+<head>
+  <title>Title</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" />
+  <style>
+  body {
+    font: 11px sans-serif;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  .dot {
+    stroke: #000;
+  }
+
+  .tooltip {
+    position: absolute;
+    width: 200px;
+    height: 28px;
+    pointer-events: none;
+  }
+
+  #nv{
+    height: 95%;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+  #scale{
+    position: absolute;
+    top: 95%;
+    left:0px;
+    height: 5%;
+    width: 100%;
+  }
+  #min{
+    position: absolute;
+    top: 93%;
+    left: 10px;
+  }
+  #max{
+    position: absolute;
+    top: 93%;
+    right: 10%;
+  }
+  </style>
+</head>
+
+
+<body>
+
+  <div id='nv'>
+
+  </div>
+  <strong id='min'>Young: <span id='minYear'></span></strong>
+  <strong id='max'>Old: <span id='maxYear'></span></strong>
+  <img src="https://raw.githubusercontent.com/d3/d3-scale/master/img/plasma.png"  id='scale'/>
+
+  <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script>
+
+  var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+
+
+  source1 = 6
+  source2 = 6
+  variable1 = 50
+  variable2 = 52
+  host = "http://localhost:8080/plot?variable1=" + variable1 + "&variable2=" + variable2 + "&source1=" + source1 + "&source2=" + source2
+  points =  [
+		{
+			"latitude": 42.12,
+			"longitude": -90.74,
+			"year": 964
+		},
+		{
+			"latitude": 50.3,
+			"longitude":-121.34,
+			"year": 11230
+		},
+		{
+			"latitude": 60.92,
+			"longitude": -118.56,
+			"year":19290
+		}
+	]
+function getAndDraw(points){
+  $.ajax({
+    contentType: "application/json",
+    dataType: "json",
+    "async": true,
+    "crossDomain": true,
+    "url": "http://localhost:8080/plot?sourceID1=6&variableID1=40&sourceID2=6&variableID2=41",
+    "method": "POST",
+    "headers": {
+      "content-type": "application/json",
+      "cache-control": "no-cache"
+    },
+    "processData": false,
+
+    "data": JSON.stringify({points: points}),
+
+    success: function(response){
+      data = response.data
+      console.log(data)
+      // set the ranges
+      $("#nv").empty()
+      var x = d3.scaleLinear().range([0, width]);
+      var y = d3.scaleLinear().range([height, 0]);
+
+      var svg = d3.select("#nv").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+
+              // Scale the range of the data
+        x.domain(d3.extent(data, function(d) { return d.x; }));
+        y.domain(d3.extent(data, function(d) { return d.y; }));
+
+    // data.forEach(function(d){
+    //   d.t = d.t / d3.max(data, function(d){return d.t})
+    //   console.log(d.t)
+    // })
+    var colorScale = d3.scaleSequential(d3.interpolatePlasma)
+      .domain(d3.extent(data, function(d){return d.t}))
+
+        // Add the scatterplot
+      svg.selectAll("dot")
+          .data(data)
+        .enter().append("circle")
+          .attr("r", 3.5)
+          .style('fill', function(d){return colorScale(d.t)})
+          .attr("cx", function(d) { return x(d.x); })
+          .attr("cy", function(d) { return y(d.y); });
+
+          // Add the X Axis
+      svg.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x));
+
+
+      // Add the Y Axis
+      svg.append("g")
+          .call(d3.axisLeft(y));
+
+      $("#minYear").text(d3.min(data, function(d){return d.t}))
+      $("#maxYear").text(d3.max(data, function(d){return d.t}))
+
+    }, error: function(xhr, status, error){
+      console.log(xhr.responseText)
+    },
+    beforeSend: function(){
+      console.log(this.url)
+    }
+  })
+}
+
+taxon = "ilex"
+neotomaURI = "http://apidev.neotomadb.org/v1/data/pollen?taxonname=" + taxon
+$.ajax(neotomaURI, {
+  success: function(data){
+    sendData = []
+    for (item in data.data){
+      site = data.data[item]
+      lat = (site.LatitudeNorth + site.LatitudeSouth) / 2
+      lng = (site.LongitudeWest + site.LongitudeEast) / 2
+      age = site.Age
+      if (age === undefined){
+        age = (site.AgeOlder + site.AgeYounger) / 2
+      }
+      if (!age){
+        age = 0
+      }
+      pt = {
+        latitude: lat,
+        longitude: lng,
+        year: age
+      }
+      sendData.push(pt)
+    }
+    getAndDraw(sendData)
+  }
+});
+
+
+
+
+  </script>
+</body>
+</html>

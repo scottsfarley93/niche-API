@@ -13,7 +13,7 @@ var pgp = require('pg-promise')( //postgres promise library makes it easier to e
 
 getPlotData = function(req, res){
   //get values for an array of space-time locations via a POST request
-
+console.log(req)
   //get query data --> everything is in the body of the request on a POST request
   var body = req.swagger.params.data
   var bodyContent = body.value
@@ -21,6 +21,7 @@ getPlotData = function(req, res){
   var sourceID1 = req.swagger.params.sourceID1.value || null
   var variableID2 = req.swagger.params.variableID2.value || null
   var sourceID2 = req.swagger.params.sourceID2.value || null
+
 
   //connect to DB
   var db = global.createConnection()
@@ -63,16 +64,10 @@ getPlotData = function(req, res){
         //sql to get the name of the table to go to
         var tablequery = "SELECT * from rasterindex \
           where 1=1 AND \
-          variableid = $(variableID) AND sourceid = $(sourceID);"
-
-        db.tx(function (t) {
-          // `t` and `this` here are the same;
-          // this.ctx = transaction config + state context;
-          return t.batch([
-              t.one(tablequery, {variableID: variableID1, sourceID: sourceID1}),
-              t.one(tablequery, {variableID: variableID2, sourceID: sourceID2})
-          ]);
-      })
+          (variableid = $(variableID1) AND sourceid = $(sourceID1))\
+          OR \
+          (variableid = $(variableID2) AND sourceid = $(sourceID2));"
+      db.any(tablequery, {variableID1: variableID1, variableID2: variableID2, sourceID1: sourceID1, sourceID2: sourceID2})
       .then(function (data) {
         console.log(data)
         table1 = data[0]['tableName']
@@ -80,49 +75,62 @@ getPlotData = function(req, res){
         console.log(table1)
         console.log(table2)
 
-        rasterquery =  "  SELECT(\
-              CASE \
-            WHEN (yearAbove - yearBelow) = 0 THEN belowVal \
-            ELSE belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yearBP - yearBelow) \
-                END ) as value,\
-              yearBP, id \
-                FROM (\
-            SELECT\
-              ST_Value(rast, bandBelow, pt) as belowVal,\
-              ST_Value(rast, bandAbove, pt) as aboveVal,\
-              yearBelow, yearAbove,\
-              yearBP, \
-              id \
-            FROM\
-            $1:value,\
-              (select p.geom as pt, \
-              p.yearBelow as yearBelow, \
-              p.yearAbove as yearAbove, \
-              p.bandBelow as bandBelow, \
-              p.bandAbove as bandAbove,\
-              p.yr as yearBP, \
-              p.id as id \
-              from pointrequests as p WHERE callID = $2) as makePoint\
-            WHERE ST_Intersects(rast, pt)) as vals;"
-          db.tx(function (t) {
-            // `t` and `this` here are the same;
-            // this.ctx = transaction config + state context;
-            return t.batch([
-                t.any(rasterquery, [table1, callid]),
-                t.any(rasterquery, [table2, callid])
-            ]);
-          }).then(function(data){
+        rasterquery =  "SELECT (\
+              	SELECT(\
+              		   CASE \
+              		    WHEN (yearAbove - yearBelow) = 0 THEN belowVal \
+              		    ELSE belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yearBP - yearBelow) \
+              		   END ) as value\
+              	FROM (\
+              		    SELECT\
+              		      ST_Value(rast, bandBelow, pt) as belowVal,\
+              		      ST_Value(rast, bandAbove, pt) as aboveVal,\
+              		      yearBelow, yearAbove,\
+              		      yearBP, \
+              		      id \
+              		FROM \
+              	     $1:value \
+              	    WHERE ST_Intersects(rast, pt)) as xvals\
+               LIMIT 1) as x,\
+               (\
+              	SELECT(\
+              		   CASE \
+              		    WHEN (yearAbove - yearBelow) = 0 THEN belowVal \
+              		    ELSE belowVal + ((aboveVal - belowVal)/ NULLIF((yearAbove - yearBelow), 0))*(yearBP - yearBelow) \
+              		   END ) as value\
+              	FROM (\
+              		    SELECT\
+              		      ST_Value(rast, bandBelow, pt) as belowVal,\
+              		      ST_Value(rast, bandAbove, pt) as aboveVal,\
+              		      yearBelow, yearAbove,\
+              		      yearBP, \
+              		      id \
+              		FROM \
+              	    $2:value\
+              	    WHERE ST_Intersects(rast, pt)) as yvals\
+               LIMIT 1 ) as y \
+                FROM \
+                    (select p.geom as pt, \
+                    p.yearBelow as yearBelow, \
+                    p.yearAbove as yearAbove, \
+                    p.bandBelow as bandBelow, \
+                    p.bandAbove as bandAbove,\
+                    p.yr as yearBP, \
+                    p.id as id \
+                    from pointrequests as p WHERE callID = $3) as makePoint   ; \
+              "
+          db.any(rasterquery, [table1, table2, callid])
+          .then(function(data){
             var ts = new Date().toJSON()
-            console.log("Success")
             var resOut = {
               success : true,
               timestamp : ts,
             }
             pts = []
-            for (i = 0; i < data[1].length; i++){
-              x = data[0][i]['value']
-              y = data[1][i]['value']
-              t = data[0][i]['yearbp']
+            for (i = 0; i < data.length; i++){
+              x = data[i]['x']
+              y = data[i]['y']
+              t = insertPoints[i]['yr']
               pts.push({
                 x : x,
                 y : y,

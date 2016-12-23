@@ -1,0 +1,111 @@
+<html>
+<head>
+
+  <title>Niche Data Service Test</title>
+</head>
+<body>
+  <h1>Niche Data Service Test</h1>
+  <button value="Quercus" class='testbutton'>Quercus</button>
+  <button value='Sequoia' class='testbutton'>Sequoia</button>
+  <button value='Sedum' class='testbutton'>Sedum</button>
+  <button value='ilex' class='testbutton'>Ilex</button>
+  <div id='results'>
+
+  </div>
+  <script
+  src="https://code.jquery.com/jquery-3.1.1.js"
+  integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+  crossorigin="anonymous"></script>
+  <script>
+  $(document).ready(function(){
+    $(".testbutton").click(function(){
+      $("#results").append("-----------<b>Starting Test</b>------------<br/>")
+      taxon = $(this).val()
+      neotomaURI = "http://apidev.neotomadb.org/v1/data/pollen?taxonname=" + taxon
+      var time1 = new Date()
+      $.ajax(neotomaURI, {
+        success: function(data){
+          console.log("Neotoma Success")
+          time2 = new Date()
+          elapsed = time2 - time1
+          $("#results").append("...Got Response From Neotoma. Elapsed Time: " + elapsed + "ms<br / />")
+          sendData = []
+          variableID = 19
+          sourceID = 6
+          for (item in data.data){
+            site = data.data[item]
+            lat = (site.LatitudeNorth + site.LatitudeSouth) / 2
+            lng = (site.LongitudeWest + site.LongitudeEast) / 2
+            age = site.Age
+            if (age === undefined){
+              age = (site.AgeOlder + site.AgeYounger) / 2
+            }
+            if (!age){
+              age = 0
+            }
+            pt = {
+              latitude: lat,
+              longitude: lng,
+              year: age
+            }
+            sendData.push(pt)
+          }
+          dat = {
+            variableID: variableID,
+            sourceID: sourceID,
+            points: sendData
+          }
+          time3 = new Date()
+          console.log(dat)
+          elapsed = time3 - time2
+          $("#results").append("...Ready to send to data service.  Elapsed: " + elapsed + "ms<br / />")
+          dataserviceURI = "http://localhost:8080/plot?sourceID1=6&variableID1=40&sourceID2=6&variableID2=41"
+          stringDat = JSON.stringify(dat)
+          $.ajax(dataserviceURI, {
+            type: "POST",
+            data: stringDat,
+            dataType: "json",
+            contentType: "application/json",
+            success: function(data){
+              time5 = new Date()
+              elapsed = time5 - time4
+              $("#results").append("...Got data service response." + "<br / />")
+              $("#results").append("......Call elapsed time: " + elapsed + "ms<br / />")
+              elapsed = time5 - time1
+              $("#results").append("Process Completed. Total Elapsed Time: " +  elapsed + "ms<br / />")
+              $("#results").append("-------------<b>Done</b>-------------" + "<br / />")
+              console.log(data)
+            },
+            beforeSend: function(){
+              time4 = new Date()
+              elapsed = time4 - time3
+              $("#results").append("...Sending to data service. Elapsed: " + elapsed + "ms<br / />")
+            },
+            error: function(xhr, status, error){
+              console.log("There was an error.")
+              $("#results").append("DATA SERVICE ERROR." + "<br / />")
+              console.log(error)
+              console.log(status)
+              console.log(xhr)
+              console.log(xhr.responseText)
+            }
+          })
+        },
+        beforeSend: function(){
+          console.log("Sending to Neotoma")
+          console.log(this.url)
+          $("#results").append("Started Call to Neotoma: " + time1.toJSON() + "<br / />")
+        },
+        error: function(xhr, status, err){
+          console.log("There was an error.")
+          console.log(err)
+
+          $("#results").append("NEOTOMA ERROR.<br / />")
+        }
+      })
+    })
+  })
+
+  </script>
+</body>
+</html>
