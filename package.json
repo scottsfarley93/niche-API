@@ -21,13 +21,13 @@
     "fs": "latest",
     "express-session": "latest",
     "bluebird": "latest",
-    "body-parser": "latest",
      "cookie-parser": "latest",
      "session-file-store": "latest",
      "everpolate" : "latest",
      "cors":"latest",
      "compression" : "latest",
-     "node-uuid":"latest"
+     "node-uuid":"latest",
+     "nodalytics" : "latest",
   },
   "devDependencies": {
     "should": "^7.1.0",

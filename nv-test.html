@@ -20,20 +20,21 @@
     stroke: #000;
   }
 
+  .row{
+padding-left: 5%;
+  }
+
   .tooltip {
     position: absolute;
     width: 200px;
     height: 28px;
     pointer-events: none;
   }
-
+/*
   #nv{
-    height: 95%;
+    height: 90%;
     width: 100%;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-  }
+  }*/
   #scale{
     position: absolute;
     top: 95%;
@@ -51,18 +52,34 @@
     top: 93%;
     right: 10%;
   }
+  /*#controls{
+    top: 0px;
+    left: 0px;
+    position: absolute;
+    width: 100%;
+  }*/
   </style>
 </head>
 
 
 <body>
 
-  <div id='nv'>
+  <div id='controls' class='row'>
+      <label>Taxon</label><input type='text' id='taxon-select' class='form-control'/>
+      <label>X-axis</label><select id='x-variable-selection' class='form-control'></select>
+      <label>Y-axis</label><select id='y-variable-selection' class='form-control'></select>
+      <button id='go' class='btn btn-primary form-control'>Plot!</button>
+  </div>
+
+  <div id='nv' class='row'>
 
   </div>
-  <strong id='min'>Young: <span id='minYear'></span></strong>
-  <strong id='max'>Old: <span id='maxYear'></span></strong>
-  <img src="https://raw.githubusercontent.com/d3/d3-scale/master/img/plasma.png"  id='scale'/>
+  <div id='legend' class='row'>
+    <strong id='min'>Young: <span id='minYear'></span></strong>
+    <strong id='max'>Old: <span id='maxYear'></span></strong>
+    <img src="https://raw.githubusercontent.com/d3/d3-scale/master/img/plasma.png"  id='scale'/>
+  </div>
+
 
   <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -70,42 +87,24 @@
   <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js"></script>
   <script src="https://d3js.org/d3.v4.min.js"></script>
   <script>
+  globals = {}
+  globals.variableID1 = 28
+  globals.variableID2 = 28
 
-  var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+  var margin = {top: 50, right: 50, bottom: 30, left: 50},
+    width = $("body").width()*0.75 - margin.left - margin.right,
+    height = $("body").height()*.6 - margin.top - margin.bottom;
 
 
 
-  source1 = 6
-  source2 = 6
-  variable1 = 50
-  variable2 = 52
-  host = "http://localhost:8080/plot?variable1=" + variable1 + "&variable2=" + variable2 + "&source1=" + source1 + "&source2=" + source2
-  points =  [
-		{
-			"latitude": 42.12,
-			"longitude": -90.74,
-			"year": 964
-		},
-		{
-			"latitude": 50.3,
-			"longitude":-121.34,
-			"year": 11230
-		},
-		{
-			"latitude": 60.92,
-			"longitude": -118.56,
-			"year":19290
-		}
-	]
 function getAndDraw(points){
+  host = "http://localhost:8080/plot?sourceID1=6&variableID1=" + globals.variableID1 + "&sourceID2=6&variableID2=" + globals.variableID2
   $.ajax({
     contentType: "application/json",
     dataType: "json",
     "async": true,
     "crossDomain": true,
-    "url": "http://localhost:8080/plot?sourceID1=6&variableID1=40&sourceID2=6&variableID2=41",
+    "url": host,
     "method": "POST",
     "headers": {
       "content-type": "application/json",
@@ -172,32 +171,76 @@ function getAndDraw(points){
   })
 }
 
-taxon = "ilex"
-neotomaURI = "http://apidev.neotomadb.org/v1/data/pollen?taxonname=" + taxon
-$.ajax(neotomaURI, {
-  success: function(data){
-    sendData = []
-    for (item in data.data){
-      site = data.data[item]
-      lat = (site.LatitudeNorth + site.LatitudeSouth) / 2
-      lng = (site.LongitudeWest + site.LongitudeEast) / 2
-      age = site.Age
-      if (age === undefined){
-        age = (site.AgeOlder + site.AgeYounger) / 2
+function loadVariables(){
+  $.ajax("http://grad.geography.wisc.edu:8080/variables", {
+    success:function(data){
+      vars = data.data
+      //x variable selection menu
+      for (i in vars){
+        $("#x-variable-selection").append("<option data-varid='" + vars[i]['variableid'] + "'>" + vars[i]['variabledescription'] + "</option>")
       }
-      if (!age){
-        age = 0
+      $("#x-variable-selection").change(function(){
+        globals.variableID1 = $('#x-variable-selection :selected').data('varid');
+        console.log(globals.variableID1)
+      })
+
+      //y variable selection menu
+      for (i in vars){
+        $("#y-variable-selection").append("<option data-varid='" + vars[i]['variableid'] + "'>" + vars[i]['variabledescription'] + "</option>")
       }
-      pt = {
-        latitude: lat,
-        longitude: lng,
-        year: age
-      }
-      sendData.push(pt)
+      $("#y-variable-selection").change(function(){
+        globals.variableID2 = $('#y-variable-selection :selected').data('varid');
+        console.log(globals.variableID2)
+      })
+    },
+    error: function(xhr){
+      console.log(xhr.responseText)
+    },
+    beforeSend: function(){
+      console.log(this.url)
     }
-    getAndDraw(sendData)
-  }
-});
+  })
+}
+
+function plot(){
+  taxon = $("#taxon-select").val()
+  console.log(taxon)
+  loadNeotomaOccurrences(taxon, getAndDraw)
+}
+
+function loadNeotomaOccurrences(taxon, callback){
+  neotomaURI = "http://apidev.neotomadb.org/v1/data/pollen?taxonname=" + taxon
+  $.ajax(neotomaURI, {
+    success: function(data){
+      sendData = []
+      for (item in data.data){
+        site = data.data[item]
+        lat = (site.LatitudeNorth + site.LatitudeSouth) / 2
+        lng = (site.LongitudeWest + site.LongitudeEast) / 2
+        age = site.Age
+        if (age === undefined){
+          age = (site.AgeOlder + site.AgeYounger) / 2
+        }
+        if (!age){
+          age = 0
+        }
+        pt = {
+          latitude: lat,
+          longitude: lng,
+          year: age
+        }
+        sendData.push(pt)
+      }
+      callback(sendData)
+    }
+  });
+}
+
+
+loadVariables()
+$("#go").click(plot)
+
+
 
 
 

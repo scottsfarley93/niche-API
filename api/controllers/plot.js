@@ -22,6 +22,10 @@ console.log(req)
   var variableID2 = req.swagger.params.variableID2.value || null
   var sourceID2 = req.swagger.params.sourceID2.value || null
 
+  console.log(variableID1)
+  console.log(variableID2)
+  console.log(sourceID1)
+  console.log(sourceID2)
 
   //connect to DB
   var db = global.createConnection()
@@ -69,9 +73,12 @@ console.log(req)
           (variableid = $(variableID2) AND sourceid = $(sourceID2));"
       db.any(tablequery, {variableID1: variableID1, variableID2: variableID2, sourceID1: sourceID1, sourceID2: sourceID2})
       .then(function (data) {
-        console.log(data)
         table1 = data[0]['tableName']
-        table2 = data[1]['tableName']
+         if (data.length == 1){ //only one row was returned, so varX = varY
+           table2 = table1
+         }else{
+           table2 = data[1]['tableName']
+         }
         console.log(table1)
         console.log(table2)
 
