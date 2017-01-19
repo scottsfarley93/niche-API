@@ -70,7 +70,7 @@ global.createConnection =function(){
 
 //get a list of the bands so we don't have to do it on every call
 var db = global.createConnection()
-var query2 = "SELECT * from bandindex;"
+var query2 = "SELECT * from bandindex ORDER BY bandnumber ASC;"
 db.any(query2)
 .then(function(bandindex){
   global.years = []
