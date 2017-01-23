@@ -20,13 +20,11 @@ var promise = require('bluebird'); //promise library for pgp to run on
 var pgp = require('pg-promise')( //postgres promise library makes it easier to execute user queries
   {promiseLib: promise}
 );
-var nodalytics = require('nodalytics');
 
 
 app.use(cors()) //allowa allow cross-server responses
-app.use(bodyParser({limit: '50mb'})); //there are going to be some big requests
+app.use(bodyParser({limit: '500mb'})); //there are going to be some big requests
 app.use(compression()) //gzip all responses
-app.use(nodalytics("UA-90190802-1"))
 
 //set up logging
 function logCall (req, res, next) { //we could go to a db table
@@ -70,7 +68,7 @@ global.createConnection =function(){
 
 //get a list of the bands so we don't have to do it on every call
 var db = global.createConnection()
-var query2 = "SELECT * from bandindex;"
+var query2 = "SELECT * from bandindex ORDER BY bandvalue ASC;"
 db.any(query2)
 .then(function(bandindex){
   global.years = []

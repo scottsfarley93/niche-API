@@ -132,7 +132,7 @@ function getClimateData(lat, lng, variable, callback){
   host += "latitude=" + lat + "&longitude=" + lng + "&variableID="+variable + "&sourceID=6"
   $.ajax(host, {
     success: function(data){
-      globals.timeseriesData = data.data[0]
+      globals.timeseriesData = data.data
       drawTimeseries(globals.timeseriesData)
     },
     error: function(xhr, status, error){
@@ -144,16 +144,9 @@ function getClimateData(lat, lng, variable, callback){
   })
 }
 
-function drawTimeseries(data){
+function drawTimeseries(arr){
+  console.log(arr)
   g.selectAll("*").remove();
-  arr = []
-  for (i in data){
-    key = i.replace("year", "")
-    key = key.replace("bp", "")
-    key = +key
-    value = data[i]
-    arr.push({'value': value, 'year':key})
-  }
 
   y.domain([
     d3.min(arr, function(d) { return d.value}),

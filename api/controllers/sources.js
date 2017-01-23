@@ -35,6 +35,7 @@ function getSources(req, res) {
       console.log("Success")
       var resOut = {
         "success" : true,
+	"message": "it worked!",
         "timestamp" : ts,
         data: data
       }

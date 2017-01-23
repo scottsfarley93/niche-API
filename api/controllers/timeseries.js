@@ -6,7 +6,7 @@
 
 function getTimeseries(req, res) {
   //GET a timeseries for a single variable/source at a single spatial location at all timeslices
-
+  console.log("Getting time series.")
   //get query values
   var latitude = req.swagger.params.latitude.value || null
   var longitude = req.swagger.params.longitude.value || null
@@ -20,7 +20,8 @@ function getTimeseries(req, res) {
   //sql to get the name of the table to go to
   var query1 = "SELECT * from rasterindex \
     where 1=1 AND \
-    variableid = $(variableID) AND sourceid = $(sourceID)\
+    variableid = $(variableID) \
+    AND sourceid = $(sourceID)\
     ;"
 
   var query1Vars = {
@@ -28,10 +29,11 @@ function getTimeseries(req, res) {
     'sourceID' : sourceID
   }
 
-  db.any(query1, query1Vars) //first get the table name
+  db.one(query1, query1Vars) //first get the table name
     .then(function(data){
+      console.log(data)
       //this is shitty SQL
-      var tablename = data[0]['tableName']
+      var tablename = data['tableName']
       var query2Vars = [longitude, latitude]
       var query2 = "SELECT "
       //make a space-time geometry for each band
@@ -47,16 +49,29 @@ function getTimeseries(req, res) {
       query2 += "	ST_SetSRID(ST_MakePoint($1, $2), 4326) as pt \
           WHERE \
           	ST_Intersects(rast, pt);"
+      console.log(query2)
       db.any(query2, query2Vars)
         .then(function(rastData){
+          if (rastData.length > 1){
+            rastData.shift()
+          }
+          arr = []
+          for (i in rastData[0]){
+            yr = i.replace("year", "")
+            yr = +yr.replace("bp", "")
+            obj = {
+              year: yr,
+              value: rastData[0][i]
+            }
+            arr.push(obj)
+          }
           // //successfully got data
           //sendit back to the user
           var ts = new Date().toJSON()
-          console.log("Success")
           var resOut = {
             "success" : true,
             "timestamp" : ts,
-            data: rastData
+            data: arr
           }
           res.json(resOut)
         })
@@ -70,10 +85,6 @@ function getTimeseries(req, res) {
         res.json(err)
       })
   })
-
-
-
-
 }
 
 module.exports = {
