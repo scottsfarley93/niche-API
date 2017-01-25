@@ -37,32 +37,27 @@ console.log(req)
     //process each point in the request
     pt = bodyContent.points[i]
     //find closest data
-    pt['yearabove'] = closestAbove(pt['year'], global.years)
-    pt['yearbelow'] = closestBelow(pt['year'], global.years)
-    pt['bandabove'] = global.bands[global.years.indexOf(pt['yearabove'])]
-    pt['bandbelow'] = global.bands[global.years.indexOf(pt['yearbelow'])]
-    pt['geom'] = 'ST_SetSRID(ST_MakePoint(' + pt['longitude'] + ',' + pt['latitude'] +'), 4326)' //make a geometry out of lat/lng
-    pt['callid'] = callid
-    pt['ptrequestid'] = 'default'
-    pt['yr'] = pt['year']
-    pt['id'] = pt['id']
-    if (pt['id'] == undefined){
-      pt['id'] = null
+    pt.yearabove = +closestAbove(pt.year, global.years)
+    pt.yearbelow = +closestBelow(pt.year, global.years)
+    pt.bandabove = global.bands[global.years.indexOf(pt.yearabove)]
+    pt.bandbelow = global.bands[global.years.indexOf(pt.yearbelow)]
+    pt.geom = 'ST_SetSRID(ST_MakePoint(' + pt.longitude + ',' + pt.latitude +'), 4326)' //make a geometry out of lat/lng
+    pt.callid = callid
+    pt.ptrequestid = 'default'
+    pt.yr = pt.year
+    if (pt.id === undefined){
+      pt.id = null
     }
     insertPoints.push(pt)
   }
   // Define query structure
-  var cs = new pgp.helpers.ColumnSet(['ptrequestid', 'yr',
+  var cs = new pgp.helpers.ColumnSet(['ptrequestid^', 'yr',
         'bandabove', 'bandbelow', 'yearabove',
-        'yearbelow', 'geom', 'callid', 'id'], {table: 'pointrequests'});
+        'yearbelow', 'geom^', 'callid', 'id'], {table: 'pointrequests'});
   //
   // insert all of the points into the request into the point request table
   var query = pgp.helpers.insert(insertPoints, cs);
 
-  //make sure the quotes are the right direction
-  // this is bad -- probably an easier way
-  query = query.replaceAll("'", "")
-  query = query.replaceAll(callid, "'" + callid + "'")
   db.none(query)
       .then(function(data){
         //sql to get the name of the table to go to
