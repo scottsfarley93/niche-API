@@ -20,7 +20,7 @@ var promise = require('bluebird'); //promise library for pgp to run on
 var pgp = require('pg-promise')( //postgres promise library makes it easier to execute user queries
   {promiseLib: promise}
 );
-
+var shortid = require("shortid");
 
 app.use(cors()) //allowa allow cross-server responses
 app.use(bodyParser({limit: '500mb'})); //there are going to be some big requests

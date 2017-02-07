@@ -27,7 +27,8 @@
      "everpolate" : "latest",
      "cors":"latest",
      "compression" : "latest",
-     "node-uuid":"latest"
+     "uuid":"latest",
+     "shortid" : "latest"
   },
   "devDependencies": {
     "should": "^7.1.0",
