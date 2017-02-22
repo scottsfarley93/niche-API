@@ -9,6 +9,10 @@ function getMapConfig(req, res) {
   //
   //get query parameters
   var configID = req.swagger.params.configID.value || null
+  var organization = req.swagger.params.organization.value || null
+  var author = req.swagger.params.author.value || null
+  var title = req.swagger.params.title.value || null
+  //can't search on description
 
   //create connection to the database
   var db = global.createConnection()
@@ -16,10 +20,14 @@ function getMapConfig(req, res) {
   //query the variable units table
   var query = "SELECT * FROM IAMConfigs \
     WHERE 1=1\
-      AND (${configID} IS NULL OR hash = ${configID});\
+      AND (${configID} IS NULL OR hash = ${configID})\
+      AND ($(author) IS NULL OR author LIKE $(author)) \
+      AND ($(organization) IS NULL OR organization LIKE $(organization))\
+      AND (${title} IS NULL OR title LIKE ${title})\
+      ORDER BY created_at DESC;\
     "
 
-  var queryVals = {'configID': configID}
+  var queryVals = {'configID': configID, 'author': author, 'organization':organization, 'title': title}
   //execute SQL query
   db.any(query, queryVals)
     .then(function(data){
@@ -57,6 +65,10 @@ postMapConfig = function(req, res){
 
   //get query data --> everything is in the body of the request on a POST request
   var body = req.swagger.params.configData.value
+  var author = req.swagger.params.author.value || null
+  var organization = req.swagger.params.organization.value || null
+  var description = req.swagger.params.description.value || null
+  var title = req.swagger.params.title.value || null
 
   var hash = shortid.generate()
 
@@ -64,8 +76,8 @@ postMapConfig = function(req, res){
   var db = global.createConnection()
 
   //do the insert
-  sql = "INSERT INTO IAMConfigs VALUES(DEFAULT, ${hash}, ${config});"
-  queryVals = {hash: hash, config: body}
+  sql = "INSERT INTO IAMConfigs VALUES(DEFAULT, ${hash}, ${config}, ${author}, ${organization}, DEFAULT, ${description}, ${title});"
+  queryVals = {'hash': hash, 'config': body, 'author':author, 'organization':organization, 'description': description, 'title': title}
 
   db.any(sql, queryVals)
     .then(function(data){
