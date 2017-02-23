@@ -12,22 +12,30 @@ function getMapConfig(req, res) {
   var organization = req.swagger.params.organization.value || null
   var author = req.swagger.params.author.value || null
   var title = req.swagger.params.title.value || null
+  var limit = req.swagger.params.limit.value || null
+  var summaryOnly = req.swagger.params.summaryOnly.value || false
   //can't search on description
 
   //create connection to the database
   var db = global.createConnection()
 
+  if (summaryOnly){
+    fields = "hash,author,organization,created_at, description, title"
+  }else{
+    fields = "*"
+  }
+
   //query the variable units table
-  var query = "SELECT * FROM IAMConfigs \
+  var query = "SELECT " + fields + " FROM IAMConfigs \
     WHERE 1=1\
       AND (${configID} IS NULL OR hash = ${configID})\
       AND ($(author) IS NULL OR author LIKE $(author)) \
       AND ($(organization) IS NULL OR organization LIKE $(organization))\
       AND (${title} IS NULL OR title LIKE ${title})\
-      ORDER BY created_at DESC;\
+      ORDER BY created_at DESC LIMIT ${limit};\
     "
 
-  var queryVals = {'configID': configID, 'author': author, 'organization':organization, 'title': title}
+  var queryVals = {'configID': configID, 'author': author, 'organization':organization, 'title': title, 'limit':limit}
   //execute SQL query
   db.any(query, queryVals)
     .then(function(data){

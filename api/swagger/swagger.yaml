@@ -410,8 +410,15 @@ paths:
           type: string
           description: title of map
           in: query
-          
-      
+        - name: summaryOnly
+          description: Return only summary information for use in the gallery 
+          type: boolean
+          in: query
+        - name: limit
+          description: Limit to this many reponses
+          type: number
+          in: query
+
       responses:
         "200": 
           description: Success
